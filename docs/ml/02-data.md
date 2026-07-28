@@ -6,10 +6,9 @@
   - [Step 1: Data Collection](#step-1-data-collection)
     - [Source](#source)
     - [Run](#run)
-  - [Step 2: Data quality checks](#step-2-data-quality-checks)
-    - [Dataset Profile](#dataset-profile)
-    - [quality checks report](#quality-checks-report)
-  - [Data cleansing](#data-cleansing)
+  - [Step 2: Data cleansing](#step-2-data-cleansing)
+    - [Tasks](#tasks)
+    - [Cleaned Dataset Profile](#cleaned-dataset-profile)
 
 ---
 
@@ -54,45 +53,61 @@ python data-engineer/download.py --force            # re-download existing years
 
 ---
 
-## Step 2: Data quality checks
+## Step 2: Data cleansing
 
-Guideline
+- Data quality checks
 
-- **Accuracy**: Data correctly reflects the real-world event or object it represents.
-- **Completeness**: Required fields, files, or partitions are fully populated without missing components.
-- **Consistency**: Values remain uniform and non-contradictory across different tables, sources, or systems.
-- **Timeliness (Freshness)**: Data arrives and updates within established Service Level Agreements (SLAs).
-- **Uniqueness**: Entity identifiers (such as primary keys) contain no unexpected duplicates.
-- **Validity**: Data conforms strictly to defined formats, data types, and logical boundaries.
+| Dimension    | What to check                   | Example                               |
+| ------------ | ------------------------------- | ------------------------------------- |
+| Validity     | Values follow rules and formats | Age must be between 0 and 120         |
+| Completeness | Missing or null values          | `customer_id` must not be null        |
+| Uniqueness   | Duplicate records or keys       | `order_id` must be unique             |
+| Consistency  | Related fields do not conflict  | `end_date` must be after `start_date` |
+| Accuracy     | Values represent reality        | Postal code matches province          |
+| Timeliness   | Data is recent enough           | Daily data arrived before 8:00 a.m.   |
 
----
-
-### Dataset Profile
-
-| Column | Notes |
-| ------ | ----- |
-
-| Year | Trips |
-| ---- | ----- |
-
-...
-
----
-
-### quality checks report
-
-| #   | Issue | Solution |
-| --- | ----- | -------- |
-
----
-
-## Data cleansing
-
-- Step
-
-| #   | Step | Description |
-| --- | ---- | ----------- |
-
+- Input: `data/raw/<year>`
 - Output: `data/cleaned/<year>`
 
 ---
+
+### Tasks
+
+| #   | Task               | Description                                          |
+| --- | ------------------ | ---------------------------------------------------- |
+| 1   | Install packages   | Install pandas and jupyter                           |
+| 2   | Schema check       | spot schame shift, and standardize schema            |
+| 3   | Validity check     | Value formats                                        |
+| 4   | Completeness check | Missing or null values                               |
+| 5   | Uniqueness check   | Duplicate records                                    |
+| 6   | Consistency check  | Conflicts between related fields                     |
+| 7   | Accuracy check     | Whether values represent reality                     |
+| 8   | Timeliness check   | Oldest and latest data points; rows per year         |
+| 9   | Summary            | Build the data profiling table and update 02-data.md |
+
+---
+
+- Install packages
+
+```sh
+# Activate the virtual environment (Windows)
+.venv\Scripts\activate
+
+# Install the packages
+pip install pandas jupyter ipykernel
+```
+
+- Data Cleansing: `data-engineer/02-quality-checks.ipynb`
+
+---
+
+### Cleaned Dataset Profile
+
+- Schema
+  | Column | Notes |
+  | ------ | ----- |
+
+- Metadata
+
+| Year | Trips |
+| ---- | ----- |
