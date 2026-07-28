@@ -17,7 +17,7 @@
 
 ## Phase 02 — Data Collection
 
-- Data collection (can be skipped; raw data is already available).
+- Data collection
 
 ## Phase 03 — Data Preparation
 
