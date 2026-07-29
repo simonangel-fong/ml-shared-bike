@@ -8,7 +8,4 @@ USER ${NB_UID}
 COPY --chown=${NB_UID}:${NB_GID} requirements.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
-COPY --chown=${NB_UID}:${NB_GID} spark_session.py /home/jovyan/spark_session.py
-COPY --chown=${NB_UID}:${NB_GID} verify_spark.py /home/jovyan/verify_spark.py
-
-ENV PYTHONPATH=/home/jovyan
+ENV PYTHONPATH=/usr/local/spark/python:/usr/local/spark/python/lib/py4j-0.10.9.7-src.zip

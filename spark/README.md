@@ -31,7 +31,6 @@ written as Parquet.
 
 ```bash
 cd spark
-cp .env.example .env
 docker compose up -d --build
 ```
 

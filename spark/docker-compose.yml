@@ -63,14 +63,13 @@ services:
       dockerfile: Dockerfile.jupyter
     hostname: spark-jupyter
     environment:
-      SPARK_HOME: /opt/spark
       PYSPARK_PYTHON: python3
       PYSPARK_DRIVER_PYTHON: python3
     ports:
       - "8888:8888"
       - "4040:4040"
     volumes:
-      - ../notebooks:/opt/notebooks
+      - ../notebooks:/home/jovyan/work
       - ../data:/opt/data
     depends_on:
       spark-master:
