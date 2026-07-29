@@ -1,0 +1,77 @@
+services:
+  spark-master:
+    container_name: spark-master
+    image: apache/spark:3.5.0
+    restart: unless-stopped
+    environment:
+      SPARK_NO_DAEMONIZE: "true"
+      SPARK_MASTER_HOST: spark-master
+      SPARK_MASTER_PORT: "7077"
+      SPARK_MASTER_WEBUI_PORT: "8080"
+    command:
+      - /opt/spark/bin/spark-class
+      - org.apache.spark.deploy.master.Master
+    ports:
+      - "8080:8080"
+      - "7077:7077"
+    volumes:
+      - ../data:/opt/data
+      - ../jobs:/opt/jobs
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - timeout 2 bash -c 'echo > /dev/tcp/spark-master/7077'
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  spark-worker:
+    container_name: spark-worker
+    image: apache/spark:3.5.0
+    restart: unless-stopped
+    command: >
+      /opt/spark/bin/spark-class
+      org.apache.spark.deploy.worker.Worker
+      spark://spark-master:7077
+      --cores ${SPARK_WORKER_CORES:-2}
+      --memory ${SPARK_WORKER_MEMORY:-2G}
+      --webui-port 8081
+    environment:
+      SPARK_NO_DAEMONIZE: "true"
+    ports:
+      - "8081:8081"
+    volumes:
+      - ../data:/opt/data
+      - ../jobs:/opt/jobs
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - timeout 2 bash -c '</dev/tcp/localhost/8081' || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    depends_on:
+      spark-master:
+        condition: service_healthy
+
+  jupyter:
+    container_name: spark-jupyter
+    build:
+      context: ./jupyter
+      dockerfile: Dockerfile.jupyter
+    hostname: spark-jupyter
+    environment:
+      SPARK_HOME: /opt/spark
+      PYSPARK_PYTHON: python3
+      PYSPARK_DRIVER_PYTHON: python3
+    ports:
+      - "8888:8888"
+      - "4040:4040"
+    volumes:
+      - ../notebooks:/opt/notebooks
+      - ../data:/opt/data
+    depends_on:
+      spark-master:
+        condition: service_healthy

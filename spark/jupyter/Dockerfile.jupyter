@@ -1,0 +1,14 @@
+FROM quay.io/jupyter/pyspark-notebook:spark-3.5.0
+
+USER root
+# writable mount points for the bind-mounted project folders
+RUN mkdir -p /opt/data && chown -R ${NB_UID}:${NB_GID} /opt/data
+USER ${NB_UID}
+
+COPY --chown=${NB_UID}:${NB_GID} requirements.txt /tmp/requirements.txt
+RUN pip install --no-cache-dir -r /tmp/requirements.txt
+
+COPY --chown=${NB_UID}:${NB_GID} spark_session.py /home/jovyan/spark_session.py
+COPY --chown=${NB_UID}:${NB_GID} verify_spark.py /home/jovyan/verify_spark.py
+
+ENV PYTHONPATH=/home/jovyan
