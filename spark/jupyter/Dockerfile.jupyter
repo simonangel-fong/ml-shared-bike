@@ -1,8 +1,9 @@
 FROM quay.io/jupyter/pyspark-notebook:spark-3.5.0
 
 USER root
-# writable mount points for the bind-mounted project folders
-RUN mkdir -p /opt/data && chown -R ${NB_UID}:${NB_GID} /opt/data
+# mount point for the bind-mounted data folder; ownership is set at runtime by
+# the image's start hook (CHOWN_EXTRA), since NB_UID is overridden in compose
+RUN mkdir -p /opt/data
 USER ${NB_UID}
 
 COPY --chown=${NB_UID}:${NB_GID} requirements.txt /tmp/requirements.txt

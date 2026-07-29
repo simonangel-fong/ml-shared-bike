@@ -62,7 +62,14 @@ services:
       context: ./jupyter
       dockerfile: Dockerfile.jupyter
     hostname: spark-jupyter
+    # run the driver as the spark image's uid (185) so files written to
+    # /opt/data by the driver and by the executors share one owner
+    user: root
     environment:
+      NB_UID: "185"
+      NB_GID: "185"
+      CHOWN_EXTRA: "/opt/data"
+      CHOWN_EXTRA_OPTS: "-R"
       PYSPARK_PYTHON: python3
       PYSPARK_DRIVER_PYTHON: python3
     ports:
