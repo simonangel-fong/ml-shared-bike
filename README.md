@@ -11,4 +11,3 @@ A machine learning project that explores key features of shared bike dataset.
 3. [PySpark warehouse](./docs/de/01-pyspark-warehouse.md) — [Spark cluster setup](./spark/README.md)
 4. [Project plan](./docs/PLAN.md)
 
-

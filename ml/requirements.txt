@@ -1,0 +1,6 @@
+# Local training environment for ml/train.ipynb.
+# Separate from spark/jupyter/requirements.txt, which provisions the Spark container.
+scikit-learn>=1.5
+pyarrow>=17.0
+matplotlib>=3.9
+joblib>=1.4

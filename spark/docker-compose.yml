@@ -16,7 +16,7 @@ services:
       - "7077:7077"
     volumes:
       - ../data:/opt/data
-      - ../jobs:/opt/jobs
+      - ./jobs:/opt/jobs
     healthcheck:
       test:
         - CMD-SHELL
@@ -25,36 +25,6 @@ services:
       timeout: 5s
       retries: 10
       start_period: 20s
-
-  spark-worker:
-    container_name: spark-worker
-    image: apache/spark:3.5.0
-    restart: unless-stopped
-    command: >
-      /opt/spark/bin/spark-class
-      org.apache.spark.deploy.worker.Worker
-      spark://spark-master:7077
-      --cores ${SPARK_WORKER_CORES:-2}
-      --memory ${SPARK_WORKER_MEMORY:-2G}
-      --webui-port 8081
-    environment:
-      SPARK_NO_DAEMONIZE: "true"
-    ports:
-      - "8081:8081"
-    volumes:
-      - ../data:/opt/data
-      - ../jobs:/opt/jobs
-    healthcheck:
-      test:
-        - CMD-SHELL
-        - timeout 2 bash -c '</dev/tcp/localhost/8081' || exit 1
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 20s
-    depends_on:
-      spark-master:
-        condition: service_healthy
 
   spark-worker-1:
     container_name: spark-worker-1
@@ -70,10 +40,40 @@ services:
     environment:
       SPARK_NO_DAEMONIZE: "true"
     ports:
+      - "8081:8081"
+    volumes:
+      - ../data:/opt/data
+      - ./jobs:/opt/jobs
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - timeout 2 bash -c '</dev/tcp/localhost/8081' || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    depends_on:
+      spark-master:
+        condition: service_healthy
+
+  spark-worker-2:
+    container_name: spark-worker-2
+    image: apache/spark:3.5.0
+    restart: unless-stopped
+    command: >
+      /opt/spark/bin/spark-class
+      org.apache.spark.deploy.worker.Worker
+      spark://spark-master:7077
+      --cores ${SPARK_WORKER_CORES:-2}
+      --memory ${SPARK_WORKER_MEMORY:-2G}
+      --webui-port 8081
+    environment:
+      SPARK_NO_DAEMONIZE: "true"
+    ports:
       - "8082:8082"
     volumes:
       - ../data:/opt/data
-      - ../jobs:/opt/jobs
+      - ./jobs:/opt/jobs
     healthcheck:
       test:
         - CMD-SHELL
@@ -107,7 +107,7 @@ services:
       - "8888:8888"
       - "4040:4040"
     volumes:
-      - ../notebooks:/home/jovyan/work
+      - ./notebooks:/home/jovyan/work
       - ../data:/opt/data
     depends_on:
       spark-master:

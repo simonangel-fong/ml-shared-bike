@@ -65,9 +65,9 @@ Later years must each be verified the same way before being added to `YEARS`;
 ## Phase 1 — Deploy PySpark with Docker
 
 - `docker-compose.yml` with a Spark master + worker and a Jupyter/PySpark driver.
-- Mount `data/` and `notebooks/` into the container.
+- Mount `data/` and `spark/notebooks/` into the container.
 - Warehouse root at `data/warehouse/`, tables written as Parquet.
-- Verify: the first cell of [warehouse.ipynb](../../notebooks/warehouse.ipynb)
+- Verify: the first cell of [warehouse.ipynb](../../spark/notebooks/warehouse.ipynb)
   builds the session and runs a small job on the cluster.
 
 Implemented in [spark/](../../spark/) — see its [README](../../spark/README.md)
@@ -77,7 +77,7 @@ for the run and verify commands.
 | -------------------------------------------------------------- | ---------------------------------- |
 | [docker-compose.yml](../../spark/docker-compose.yml)            | master + worker + jupyter driver   |
 | [Dockerfile.jupyter](../../spark/jupyter/Dockerfile.jupyter)    | driver image                       |
-| [warehouse.ipynb](../../notebooks/warehouse.ipynb)              | session setup and later phases     |
+| [warehouse.ipynb](../../spark/notebooks/warehouse.ipynb)              | session setup and later phases     |
 
 ---
 
@@ -166,7 +166,7 @@ Partitioned by `start_year`, `start_month`.
 - Normalize headers, add `source_file` and `source_year`, union the years.
 - Write `stage_trips`.
 
-Implemented in [etl.ipynb](../../notebooks/etl.ipynb).
+Implemented in [etl.ipynb](../../spark/notebooks/etl.ipynb).
 
 ### Transform
 
@@ -254,4 +254,4 @@ cd spark && cp .env.example .env && docker compose up -d --build
 ```
 
 Then open Jupyter at http://localhost:8888 (token `bikeshare`) and run
-[warehouse.ipynb](../../notebooks/warehouse.ipynb) from the top.
+[warehouse.ipynb](../../spark/notebooks/warehouse.ipynb) from the top.
