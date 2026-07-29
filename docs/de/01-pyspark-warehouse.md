@@ -51,7 +51,8 @@ Normalization rule: lowercase, collapse whitespace/underscores to `_`, strip BOM
 - `docker-compose.yml` with a Spark master + worker and a Jupyter/PySpark driver.
 - Mount `data/` and `notebooks/` into the container.
 - Warehouse root at `data/warehouse/`, tables written as Parquet.
-- Verify: driver reads one raw CSV and prints the row count.
+- Verify: the first cell of [warehouse.ipynb](../../notebooks/warehouse.ipynb)
+  builds the session and runs a small job on the cluster.
 
 Implemented in [spark/](../../spark/) — see its [README](../../spark/README.md)
 for the run and verify commands.
@@ -60,8 +61,7 @@ for the run and verify commands.
 | -------------------------------------------------------------- | ---------------------------------- |
 | [docker-compose.yml](../../spark/docker-compose.yml)            | master + worker + jupyter driver   |
 | [Dockerfile.jupyter](../../spark/jupyter/Dockerfile.jupyter)    | driver image                       |
-| [spark_session.py](../../spark/jupyter/spark_session.py)        | `get_spark()` used by later phases |
-| [verify_spark.py](../../spark/jupyter/verify_spark.py)          | the verification step above        |
+| [warehouse.ipynb](../../notebooks/warehouse.ipynb)              | session setup and later phases     |
 
 ---
 
@@ -220,6 +220,7 @@ Chronological split — random splits would leak future demand into training.
 
 ```sh
 cd spark && cp .env.example .env && docker compose up -d --build
-docker compose exec jupyter python /home/jovyan/verify_spark.py
-
 ```
+
+Then open Jupyter at http://localhost:8888 (token `bikeshare`) and run
+[warehouse.ipynb](../../notebooks/warehouse.ipynb) from the top.
