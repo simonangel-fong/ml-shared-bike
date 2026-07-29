@@ -45,10 +45,20 @@ Normalization rule: lowercase, collapse whitespace/underscores to `_`, strip BOM
 `bike_model` is kept as nullable — it is absent before 2024.
 
 **Current scope: 2019–2020 only.** Both years use the space-separated header and
-`dd/MM/yyyy HH:mm`, so the ETL handles a single schema and asserts it on read
-rather than reconciling variants. 2021–2023 share that header and can be added
-by extending `YEARS`; 2024–2025 additionally need the underscore header and the
-second timestamp format restored.
+are **month-first** — `MM/dd/yyyy HH:mm`, not the `dd/MM` the table above claims.
+Verified from the file boundaries: `2019-Q1.csv` ends at `03/31/2019` (there is
+no 31st month) and each 2020 monthly file opens with its own month.
+
+This matters because a day-first read fails silently in two ways at once: rows
+with day > 12 give an invalid month and are dropped (~61% of the data), while
+rows with day <= 12 parse to a real but wrong date. The transform therefore
+asserts the result rather than trusting the format — every timestamp must land
+in the year its folder claims, and the monthly distribution must not be flat
+(a swap spreads days 1–31 across the twelve month buckets, which shows up as a
+peak-to-trough ratio near 1).
+
+Later years must each be verified the same way before being added to `YEARS`;
+2024+ additionally use the underscore header and `yyyy-MM-dd HH:mm:ss`.
 
 ---
 
@@ -214,19 +224,21 @@ ordered by timestamp, so no future information leaks into a row.
 
 Chronological split — random splits would leak future demand into training.
 
-Matches the 2019–2020 ETL scope:
+Matches the 2019–2023 ETL scope:
 
 | split | range             |
 | ----- | ----------------- |
-| train | 2019-01 – 2019-12 |
-| test  | 2020-01 – 2020-12 |
+| train | 2019-01 – 2022-12 |
+| test  | 2023-01 – 2023-12 |
 
-> **Caveat: 2020 is a COVID year.** April 2020 is the lowest month in the data
-> (~72k trips) and July–August the highest (~460–494k) — a lockdown collapse
-> followed by a recreational surge, with no equivalent in 2019. Test error on
-> this split partly measures the regime change, not model quality. Extending the
-> ETL to 2021–2023 (same header, no schema work) would allow train 2019–2022 /
-> test 2023 instead.
+Roughly 80/20 by row count. A single test year keeps the split chronological
+while leaving four years for training; 2023 is also clear of the COVID period,
+so test error reflects ordinary demand rather than the 2020–2021 disruption.
+
+> **2020–2021 remain in the training set.** April 2020 (~72k trips) and the
+> summer peaks (~460–494k) are a lockdown collapse followed by a recreational
+> surge, unlike any other year in the series. They are useful training signal
+> but not representative, so a model may underfit them.
 
 - Rows whose lag features fall outside the available history are dropped from
   the head of the train split.

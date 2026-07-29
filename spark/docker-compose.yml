@@ -56,14 +56,45 @@ services:
       spark-master:
         condition: service_healthy
 
+  spark-worker-1:
+    container_name: spark-worker-1
+    image: apache/spark:3.5.0
+    restart: unless-stopped
+    command: >
+      /opt/spark/bin/spark-class
+      org.apache.spark.deploy.worker.Worker
+      spark://spark-master:7077
+      --cores ${SPARK_WORKER_CORES:-2}
+      --memory ${SPARK_WORKER_MEMORY:-2G}
+      --webui-port 8081
+    environment:
+      SPARK_NO_DAEMONIZE: "true"
+    ports:
+      - "8082:8082"
+    volumes:
+      - ../data:/opt/data
+      - ../jobs:/opt/jobs
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - timeout 2 bash -c '</dev/tcp/localhost/8082' || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    depends_on:
+      spark-master:
+        condition: service_healthy
+
   jupyter:
     container_name: spark-jupyter
     build:
       context: ./jupyter
       dockerfile: Dockerfile.jupyter
+    image: spark-jupyter
     hostname: spark-jupyter
-    # run the driver as the spark image's uid (185) so files written to
-    # /opt/data by the driver and by the executors share one owner
+    # match the spark image's uid so files under /opt/data written by the
+    # driver and by the executors share one owner
     user: root
     environment:
       NB_UID: "185"
