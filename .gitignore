@@ -221,3 +221,6 @@ data/
 
 # Trained model artifacts
 ml/artifacts/
+
+# MLflow artifact store (mlflow/docker-compose.yml bind mount)
+mlflow/artifacts/

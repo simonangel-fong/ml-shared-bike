@@ -4,3 +4,7 @@ scikit-learn>=1.5
 pyarrow>=17.0
 matplotlib>=3.9
 joblib>=1.4
+# Tracking client. Server runs in mlflow/docker-compose.yml — keep the major
+# version aligned with the server image (v3). MLflow 2.x caps pyarrow<20, which
+# conflicts with the pyarrow>=17 above.
+mlflow>=3.1,<4

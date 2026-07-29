@@ -34,10 +34,9 @@ written as Parquet.
 ## Run
 
 ```bash
-cd spark
-docker compose up -d --build
+docker compose -f spark/docker-compose.yml up -d --build
 
-docker compose down -v
+docker compose -f spark/docker-compose.yml down -v
 ```
 
 | service         | URL                                       |
