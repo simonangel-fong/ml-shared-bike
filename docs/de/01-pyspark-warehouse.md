@@ -34,7 +34,7 @@ Grain of the ML output: **one row per station per hour**.
 
 ## Source Data
 
-`data/raw/<year>/*.csv`, 2019–2025. Two header variants must be reconciled on read:
+`data/raw/<year>/*.csv`. The full archive spans 2019–2025 in two header variants:
 
 | years     | header style                                                                               | extra column | time format           |
 | --------- | ------------------------------------------------------------------------------------------ | ------------ | --------------------- |
@@ -43,6 +43,12 @@ Grain of the ML output: **one row per station per hour**.
 
 Normalization rule: lowercase, collapse whitespace/underscores to `_`, strip BOM.
 `bike_model` is kept as nullable — it is absent before 2024.
+
+**Current scope: 2019–2020 only.** Both years use the space-separated header and
+`dd/MM/yyyy HH:mm`, so the ETL handles a single schema and asserts it on read
+rather than reconciling variants. 2021–2023 share that header and can be added
+by extending `YEARS`; 2024–2025 additionally need the underscore header and the
+second timestamp format restored.
 
 ---
 
@@ -145,16 +151,20 @@ Partitioned by `start_year`, `start_month`.
 
 ### Extract
 
-- Read each year's CSVs with an explicit string schema per header variant.
-- Normalize headers, add `source_file` and `source_year`, union the variants.
+- Read each year's CSVs as all-string columns; assert the header matches the
+  expected variant so an unnoticed schema shift fails loudly.
+- Normalize headers, add `source_file` and `source_year`, union the years.
 - Write `stage_trips`.
+
+Implemented in [etl.ipynb](../../notebooks/etl.ipynb).
 
 ### Transform
 
 1. **Type cast** — ids and duration to numeric; rows failing the cast are
    dropped and counted.
-2. **Parse timestamps** — try `dd/MM/yyyy HH:mm`, fall back to
-   `yyyy-MM-dd HH:mm:ss`; null on both means the row is rejected.
+2. **Parse timestamps** — `dd/MM/yyyy HH:mm` for the years in scope; a null
+   result means the row is rejected. Adding 2024+ requires a fallback to
+   `yyyy-MM-dd HH:mm:ss`.
 3. **Filter invalid trips** — drop where `end_time <= start_time`,
    duration < 60s or > 24h, or either station id is null.
 4. **Deduplicate** — drop duplicate `trip_id`, keeping the first occurrence.
@@ -204,10 +214,19 @@ ordered by timestamp, so no future information leaks into a row.
 
 Chronological split — random splits would leak future demand into training.
 
+Matches the 2019–2020 ETL scope:
+
 | split | range             |
 | ----- | ----------------- |
-| train | 2019-01 – 2023-12 |
-| test  | 2024-01 – 2025-12 |
+| train | 2019-01 – 2019-12 |
+| test  | 2020-01 – 2020-12 |
+
+> **Caveat: 2020 is a COVID year.** April 2020 is the lowest month in the data
+> (~72k trips) and July–August the highest (~460–494k) — a lockdown collapse
+> followed by a recreational surge, with no equivalent in 2019. Test error on
+> this split partly measures the regime change, not model quality. Extending the
+> ETL to 2021–2023 (same header, no schema work) would allow train 2019–2022 /
+> test 2023 instead.
 
 - Rows whose lag features fall outside the available history are dropped from
   the head of the train split.
