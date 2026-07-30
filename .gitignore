@@ -224,3 +224,25 @@ ml/artifacts/
 
 # MLflow artifact store (mlflow/docker-compose.yml bind mount)
 mlflow/artifacts/
+
+# Terraform
+#   Provider plugins and local caches (can be hundreds of MB)
+**/.terraform/*
+#   State files contain secrets in plaintext
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+#   Crash logs
+crash.log
+crash.*.log
+#   Variable files often hold credentials; keep *.example templates
+*.tfvars
+*.tfvars.json
+!*.tfvars.example
+#   Saved plans are binary and may contain secrets
+*.tfplan
+#   CLI config may contain credentials
+.terraformrc
+terraform.rc
+#   Backend config (partial config passed via -backend-config)
+backend.hcl
