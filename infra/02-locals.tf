@@ -16,8 +16,8 @@ locals {
   # ##############################
   # Providers
   # ##############################
-  aws_region = "ca-central-1"
-
+  aws_region    = "ca-central-1"
+  aws_kms_alias = "alias/default-key"
 }
 
 
