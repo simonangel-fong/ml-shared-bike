@@ -15,11 +15,8 @@ METASTORE_DIR = "/opt/data/metastore_db"
 METASTORE_URL = f"jdbc:derby:;databaseName={METASTORE_DIR};create=true"
 
 
-# parquet enforces no constraints, so PK/FK/CHECK and indexes have no
-# equivalent here; the notebook validates the ranges instead
+# parquet enforces no constraints; the notebook validates the ranges
 TABLES = {
-    # date grain, not minute: ~1.8k rows against 18.9M facts, small enough to
-    # broadcast, and the only level carrying attributes worth normalizing
     "dim_date": (
         """
         dim_date_id         DATE,
@@ -56,8 +53,6 @@ TABLES = {
         """,
         [],
     ),
-    # time of day lives here as plain ints: 1,440 possible values with no
-    # attributes to hang off them is a measure, not a dimension
     "fact_trip": (
         """
         fact_trip_id               BIGINT,

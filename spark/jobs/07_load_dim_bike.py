@@ -27,7 +27,6 @@ def build_dim_bike(spark):
         )
         .filter(F.col("dim_bike_id").isNotNull())
         .groupBy("dim_bike_id")
-        # max() over the non-UNKNOWN values, falling back to UNKNOWN
         .agg(
             F.coalesce(
                 F.max(

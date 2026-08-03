@@ -9,9 +9,9 @@ ZIP of monthly/quarterly CSVs, so this script resolves the resource URL from the
 CKAN package metadata, downloads it, and extracts the CSVs per year.
 
 Usage:
-    python data-engineer/download.py                    # 2019-2025 (default)
-    python data-engineer/download.py --years 2019 2020
-    python data-engineer/download.py --start 2019 --end 2025 --force
+    python download-raw.py                    # 2019-2025 (default)
+    python download-raw.py --years 2019 2020
+    python download-raw.py --start 2019 --end 2025 --force
 """
 
 from __future__ import annotations

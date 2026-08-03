@@ -73,8 +73,7 @@ def build_calendar(first, last):
     rows = []
     day = first
     while day <= last:
-        # python weekday() is 0=Monday; the warehouse uses spark's
-        # dayofweek, 1=Sunday
+        # python weekday() is 0=Monday; spark dayofweek is 1=Sunday
         weekday = (day.weekday() + 1) % 7 + 1
         iso = day.isocalendar()
         rows.append(
@@ -96,9 +95,8 @@ def build_calendar(first, last):
 
 
 def main():
-    # local[*]: ~1,800 rows needs no cluster, and running the write in the
-    # driver keeps it off the executors, which run as a different uid than
-    # this container and cannot write into paths root creates
+    # local[*]: the executors run as a different uid and cannot write into
+    # the paths this container creates
     spark = (
         SparkSession.builder.appName("load_dim_date")
         .master("local[*]")

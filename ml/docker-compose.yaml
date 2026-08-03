@@ -1,0 +1,24 @@
+services:
+  jupyter:
+    container_name: ml-jupyter
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ml-jupyter
+    restart: unless-stopped
+    environment:
+      JUPYTER_TOKEN: ${JUPYTER_TOKEN:-}
+    ports:
+      # 8888 is the spark cluster's jupyter
+      - "8889:8888"
+    volumes:
+      - ./notebooks:/home/jovyan/work
+      # read-only: the export is the warehouse's output, not ours
+      - ../data/export:/opt/data/export:ro
+      - ./data:/opt/data/ml
+    networks:
+      - ml-net
+
+networks:
+  ml-net:
+    driver: bridge

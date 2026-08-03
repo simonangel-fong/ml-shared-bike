@@ -1,4 +1,4 @@
-# Spark — PySpark cluster
+# Spark: PySpark cluster
 
 [Back](../docs/de/01-pyspark-warehouse.md)
 
@@ -15,18 +15,13 @@
 Everything under `jupyter/` is baked into the driver image at build time, not
 bind-mounted — edit those files and rebuild with `docker compose up -d --build`.
 
-The Spark session is built in the notebooks themselves — see
-[warehouse.ipynb](notebooks/warehouse.ipynb), which connects to
-`spark://spark-master:7077` and sets `spark.driver.host` to `spark-jupyter`
-so executors can route results back to the driver container.
-
 ## Mounts
 
-| host         | container           | notes                  |
-| ------------ | ------------------- | ---------------------- |
-| `data/`      | `/opt/data`         | all three services     |
+| host               | container           | notes                  |
+| ------------------ | ------------------- | ---------------------- |
+| `data/`            | `/opt/data`         | all three services     |
 | `spark/notebooks/` | `/home/jovyan/work` | driver only            |
-| `jobs/`      | `/opt/jobs`         | master and worker only |
+| `jobs/`            | `/opt/jobs`         | master and worker only |
 
 Warehouse root is `/opt/data/warehouse` (`data/warehouse/` on the host), tables
 written as Parquet.

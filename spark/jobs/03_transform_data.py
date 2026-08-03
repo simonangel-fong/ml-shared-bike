@@ -119,8 +119,7 @@ def main():
     before = stage.count()
     kept = repair(stage.filter(valid_rows(stage))).select(*columns)
 
-    # cache: the write and the count below would otherwise recompute the
-    # whole chain, and the source is the table being overwritten
+    # the source is the table being overwritten, so materialize first
     kept.persist()
     after = kept.count()
 

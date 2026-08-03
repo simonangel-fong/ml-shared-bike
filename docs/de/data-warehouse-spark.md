@@ -1,41 +1,24 @@
-# PySpark Warehouse
+# Data Warehouse (Spark)
 
 [Back](../../README.md)
 
-- [PySpark Warehouse](#pyspark-warehouse)
-  - [Objective](#objective)
-  - [Data Warehouse](#data-warehouse)
-  - [phases](#phases)
+- [Data Warehouse (Spark)](#data-warehouse-spark)
+  - [Data Warehouse Design](#data-warehouse-design)
   - [Development](#development)
-    - [init spark](#init-spark)
-    - [stage table](#stage-table)
-    - [extract data](#extract-data)
-    - [transform data](#transform-data)
-    - [create warehouse](#create-warehouse)
-    - [load data](#load-data)
+    - [Download raw data](#download-raw-data)
+    - [Init spark](#init-spark)
+    - [Create stage table](#create-stage-table)
+    - [Extract data](#extract-data)
+    - [Transform data](#transform-data)
+    - [Create data warehouse](#create-data-warehouse)
+    - [Load data](#load-data)
+    - [Export data](#export-data)
+  - [Archive to S3](#archive-to-s3)
+  - [Clean up](#clean-up)
 
 ---
 
-## Objective
-
-1. rebuild data warehouse in spark with SQL.
-2. create etl
-3. load 2019~2023 data
-4. output fact and dimensions data.
-
-reference:
-
-- data warehouse via postgresql; same dataset;
-- path: C:\Users\simon\OneDrive\Tech\Github\Project-Shared-Bike-OLAP\data-warehouse\postgresql
-- sql script ready
-
-source
-
-- `data/raw/<year>/*.csv`
-
----
-
-## Data Warehouse
+## Data Warehouse Design
 
 - Table: `dim_date`
   - ~1,825 rows (2019-01-01 → 2023-12-31)
@@ -100,23 +83,18 @@ source
 
 ---
 
-## phases
+## Development
 
-| #   | Phase            | Description                             |
-| --- | ---------------- | --------------------------------------- |
-| 1   | init spark       | init spark with docker compose          |
-| 2   | stage table      | create stage table                      |
-| 3   | extract data     | extract data into stage table           |
-| 4   | trasform data    | trasorm data in stage table             |
-| 5   | create warehouse | create fact and dimension tables        |
-| 6   | load data        | load data from stage table to warehouse |
-| 7   | export data      | export warehouse and upload to s3       |
+### Download raw data
+
+```sh
+# download raw data to data/raw
+python download-raw.py
+```
 
 ---
 
-## Development
-
-### init spark
+### Init spark
 
 ```sh
 # spin up
@@ -131,11 +109,11 @@ docker compose -f spark/docker-compose.yml ps
 # spark-worker-2   apache/spark:3.5.0   "/opt/entrypoint.sh …"   spark-worker-2   11 seconds ago   Up 4 seconds (health: starting)   0.0.0.0:8082->8081/tcp, [::]:8082->8081/tcp
 ```
 
-Then open Jupyter at http://localhost:8888 (token `bikeshare`) and run
+Then open Jupyter at http://localhost:8888 (token `bikeshare`) and run the jobs below.
 
 ---
 
-### stage table
+### Create stage table
 
 ```sh
 docker compose -f spark/docker-compose.yml exec spark-master /opt/spark/bin/spark-submit --master spark://spark-master:7077 /opt/jobs/02_stage_table.py
@@ -143,7 +121,7 @@ docker compose -f spark/docker-compose.yml exec spark-master /opt/spark/bin/spar
 
 ---
 
-### extract data
+### Extract data
 
 ```sh
 docker compose -f spark/docker-compose.yml exec spark-master /opt/spark/bin/spark-submit --master spark://spark-master:7077 /opt/jobs/03_extract.py
@@ -151,7 +129,7 @@ docker compose -f spark/docker-compose.yml exec spark-master /opt/spark/bin/spar
 
 ---
 
-### transform data
+### Transform data
 
 ```sh
 docker compose -f spark/docker-compose.yml exec spark-master /opt/spark/bin/spark-submit --master spark://spark-master:7077 /opt/jobs/04_transform.py
@@ -159,7 +137,7 @@ docker compose -f spark/docker-compose.yml exec spark-master /opt/spark/bin/spar
 
 ---
 
-### create warehouse
+### Create data warehouse
 
 ```sh
 docker compose -f spark/docker-compose.yml exec spark-master /opt/spark/bin/spark-submit --master spark://spark-master:7077 /opt/jobs/05_create_warehouse.py
@@ -167,32 +145,61 @@ docker compose -f spark/docker-compose.yml exec spark-master /opt/spark/bin/spar
 
 ---
 
-### load data
+### Load data
 
 `dim_date` runs from the jupyter container: the calendar is built in the
-driver with `holidays`, which is only installed in that image. It runs
-`local[*]` — ~1,800 rows needs no cluster, and the executors run as a
-different uid than this container.
+driver with `holidays`, which is only installed in that image. It runs on
+`local[*]` — ~1,800 rows need no cluster, and the executors run as a
+different uid from this container.
 
 ```sh
+# dim_date: runs on jupyter container
 docker compose -f spark/docker-compose.yml exec jupyter /usr/local/spark/bin/spark-submit --master local[*] /opt/jobs/06_load_dim_date.py
-```
 
-`dim_station` reads the full stage table, so it runs on the cluster.
-
-```sh
+# dim_station
 docker compose -f spark/docker-compose.yml exec spark-master /opt/spark/bin/spark-submit --master spark://spark-master:7077 /opt/jobs/07_load_dim_station.py
-```
 
-```sh
+# dim_bike
 docker compose -f spark/docker-compose.yml exec spark-master /opt/spark/bin/spark-submit --master spark://spark-master:7077 /opt/jobs/08_load_dim_bike.py
-```
 
-```sh
+# dim_user
 docker compose -f spark/docker-compose.yml exec spark-master /opt/spark/bin/spark-submit --master spark://spark-master:7077 /opt/jobs/09_load_dim_user_type.py
+
+# fact_trip
+docker compose -f spark/docker-compose.yml exec spark-master /opt/spark/bin/spark-submit --master spark://spark-master:7077 /opt/jobs/10_load_fact_trip.py
 ```
 
-```sh
-docker compose -f spark/docker-compose.yml exec spark-master /opt/spark/bin/spark-submit --master spark://spark-master:7077 /opt/jobs/10_load_fact_trip.py
+---
 
+### Export data
+
+All five tables are written to `data/export/` as parquet, with partitioning
+preserved. The same files back up the warehouse, feed feature engineering and
+training from `fact_trip`, and serve station and user-type lookups to the app.
+
+```sh
+docker compose -f spark/docker-compose.yml exec spark-master /opt/spark/bin/spark-submit --master spark://spark-master:7077 /opt/jobs/11_export.py
+```
+
+- `data/export/`
+  - `dim_bike/`
+  - `dim_date/`
+  - `dim_station/`
+  - `dim_user_type/`
+  - `fact_trip/`
+
+---
+
+## Archive to S3
+
+```sh
+aws s3 cp data/export s3://toronto-shared-bike-data-warehouse-data-bucket/warehouse --recursive
+```
+
+---
+
+## Clean up
+
+```sh
+docker compose -f spark/docker-compose.yml down -v
 ```

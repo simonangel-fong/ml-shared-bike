@@ -17,8 +17,6 @@ METASTORE_URL = f"jdbc:derby:;databaseName={METASTORE_DIR};create=true"
 
 YEARS = [2019, 2020, 2021, 2022, 2023]
 
-# csv header -> stage column; the csv orders station id before time, the
-# stage table does not, so the mapping is by name
 COLUMN_MAP = {
     "Trip Id": "trip_id",
     "Trip  Duration": "trip_duration",
@@ -46,8 +44,6 @@ def read_year(spark, year):
         multiLine=False,
     )
 
-    # strip the BOM and collapse the double space in "Trip  Duration" so the
-    # header matches COLUMN_MAP across all years
     renamed = {}
     for name in df.columns:
         clean = name.replace("﻿", "").strip()
@@ -61,7 +57,6 @@ def read_year(spark, year):
     for old, new in renamed.items():
         df = df.withColumnRenamed(old, new)
 
-    # `model` only exists in 2024+; declared here so every year matches
     if "model" not in df.columns:
         df = df.withColumn("model", F.lit(None).cast("string"))
 

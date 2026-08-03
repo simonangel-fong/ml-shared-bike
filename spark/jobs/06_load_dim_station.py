@@ -43,8 +43,7 @@ def station_names(spark):
 
 def latest_name(df):
     """Keep the name seen most recently for each station."""
-    # UNKNOWN is a placeholder from the transform, not a real rename, so it
-    # only wins when a station has never had a real name
+    # UNKNOWN is a placeholder, not a rename: it only wins if nothing else
     ranked = df.withColumn(
         "rn",
         F.row_number().over(
