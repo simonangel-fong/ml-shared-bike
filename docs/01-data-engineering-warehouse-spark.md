@@ -1,8 +1,8 @@
-# Data Warehouse (Spark)
+# Data Engineering: Data Warehouse (Spark)
 
 [Back](../../README.md)
 
-- [Data Warehouse (Spark)](#data-warehouse-spark)
+- [Data Engineering: Data Warehouse (Spark)](#data-engineering-data-warehouse-spark)
   - [Data Warehouse Design](#data-warehouse-design)
   - [Development](#development)
     - [Download raw data](#download-raw-data)

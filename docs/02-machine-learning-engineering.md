@@ -57,4 +57,8 @@ Use case:
 
 ```sh
 docker compose -f ml/docker-compose.yaml up -d --build
+
+docker compose -f ml/docker-compose.yaml ps
+# NAME         IMAGE        COMMAND                  SERVICE   CREATED         STATUS                   PORTS
+# ml-jupyter   ml-jupyter   "tini -g -- start.sh…"   jupyter   3 minutes ago   Up 2 minutes (healthy)   0.0.0.0:8888->8888/tcp, [::]:8888->8888/tcp
 ```

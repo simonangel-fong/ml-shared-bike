@@ -1,7 +1,14 @@
-# Local training environment for ml/train.ipynb.
+# Provisions the ml-jupyter container (ml/Dockerfile).
 # Separate from spark/jupyter/requirements.txt, which provisions the Spark container.
 scikit-learn>=1.5
 pyarrow>=17.0
+# 18.9M trip rows: duckdb aggregates the export out-of-core, pandas takes over
+# once the result is small. pandas 3.0 is a breaking release — pin below it.
+duckdb>=1.1
+pandas>=2.2,<3
+# duckdb refuses to read *or write* its progress-bar setting under a Jupyter
+# kernel without this, so it is required, not cosmetic.
+ipywidgets>=8.1
 matplotlib>=3.9
 joblib>=1.4
 # Tracking client. Server runs in mlflow/docker-compose.yml — keep the major
