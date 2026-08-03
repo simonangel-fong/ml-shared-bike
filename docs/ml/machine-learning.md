@@ -7,6 +7,7 @@
   - [ML Application](#ml-application)
   - [ML](#ml)
   - [Development](#development)
+    - [Spin up notebook](#spin-up-notebook)
 
 ---
 
@@ -52,6 +53,8 @@ Use case:
 
 ## Development
 
+### Spin up notebook
+
 ```sh
-docker compose
+docker compose -f ml/docker-compose.yaml up -d --build
 ```

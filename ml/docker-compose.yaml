@@ -9,11 +9,10 @@ services:
     environment:
       JUPYTER_TOKEN: ${JUPYTER_TOKEN:-}
     ports:
-      # 8888 is the spark cluster's jupyter
-      - "8889:8888"
+      - "8888:8888"
     volumes:
       - ./notebooks:/home/jovyan/work
-      # read-only: the export is the warehouse's output, not ours
+      # read-only: the export is the warehouse's output
       - ../data/export:/opt/data/export:ro
       - ./data:/opt/data/ml
     networks:
