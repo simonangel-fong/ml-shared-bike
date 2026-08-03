@@ -79,3 +79,19 @@ docker compose -f spark/docker-compose.yml exec spark-master /opt/spark/bin/spar
 ```sh
 docker compose -f spark/docker-compose.yml exec spark-master /opt/spark/bin/spark-submit --master spark://spark-master:7077 /opt/jobs/03_extract.py
 ```
+
+---
+
+### transform data
+
+```sh
+docker compose -f spark/docker-compose.yml exec spark-master /opt/spark/bin/spark-submit --master spark://spark-master:7077 /opt/jobs/04_transform.py
+```
+
+---
+
+### create warehouse
+
+```sh
+docker compose -f spark/docker-compose.yml exec spark-master /opt/spark/bin/spark-submit --master spark://spark-master:7077 /opt/jobs/05_create_warehouse.py
+```
