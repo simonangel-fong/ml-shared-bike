@@ -11,9 +11,9 @@ from pyspark.sql import SparkSession, functions as F
 RAW = "/opt/data/raw"
 WAREHOUSE = "/opt/data/warehouse"
 STAGE_TRIPS_PATH = f"{WAREHOUSE}/stage_trips"
-
 METASTORE_DIR = "/opt/data/metastore_db"
 METASTORE_URL = f"jdbc:derby:;databaseName={METASTORE_DIR};create=true"
+
 
 YEARS = [2019, 2020, 2021, 2022, 2023]
 
@@ -71,8 +71,8 @@ def read_year(spark, year):
 def main():
     spark = (
         SparkSession.builder.appName("extract")
-        .config("spark.sql.sources.partitionOverwriteMode", "dynamic")
         .config("spark.sql.warehouse.dir", WAREHOUSE)
+        .config("spark.sql.sources.partitionOverwriteMode", "dynamic")
         .config("javax.jdo.option.ConnectionURL", METASTORE_URL)
         .enableHiveSupport()
         .getOrCreate()

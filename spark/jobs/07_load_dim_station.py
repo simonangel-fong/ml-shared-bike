@@ -14,9 +14,9 @@ from pyspark.sql import SparkSession, Window, functions as F
 
 WAREHOUSE = "/opt/data/warehouse"
 DIM_STATION_PATH = f"{WAREHOUSE}/dim_station"
-
 METASTORE_DIR = "/opt/data/metastore_db"
 METASTORE_URL = f"jdbc:derby:;databaseName={METASTORE_DIR};create=true"
+
 
 TS_FORMAT = "MM/dd/yyyy HH:mm"
 
@@ -64,6 +64,7 @@ def main():
     spark = (
         SparkSession.builder.appName("load_dim_station")
         .config("spark.sql.warehouse.dir", WAREHOUSE)
+        .config("spark.sql.sources.partitionOverwriteMode", "dynamic")
         .config("javax.jdo.option.ConnectionURL", METASTORE_URL)
         .enableHiveSupport()
         .getOrCreate()

@@ -12,6 +12,7 @@
     - [extract data](#extract-data)
     - [transform data](#transform-data)
     - [create warehouse](#create-warehouse)
+    - [load data](#load-data)
 
 ---
 
@@ -181,4 +182,17 @@ docker compose -f spark/docker-compose.yml exec jupyter /usr/local/spark/bin/spa
 
 ```sh
 docker compose -f spark/docker-compose.yml exec spark-master /opt/spark/bin/spark-submit --master spark://spark-master:7077 /opt/jobs/07_load_dim_station.py
+```
+
+```sh
+docker compose -f spark/docker-compose.yml exec spark-master /opt/spark/bin/spark-submit --master spark://spark-master:7077 /opt/jobs/08_load_dim_bike.py
+```
+
+```sh
+docker compose -f spark/docker-compose.yml exec spark-master /opt/spark/bin/spark-submit --master spark://spark-master:7077 /opt/jobs/09_load_dim_user_type.py
+```
+
+```sh
+docker compose -f spark/docker-compose.yml exec spark-master /opt/spark/bin/spark-submit --master spark://spark-master:7077 /opt/jobs/10_load_fact_trip.py
+
 ```

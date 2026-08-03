@@ -11,8 +11,6 @@ from pyspark.sql.types import StructType, StructField, StringType
 
 WAREHOUSE = "/opt/data/warehouse"
 STAGE_TRIPS_PATH = f"{WAREHOUSE}/stage_trips"
-
-# on the shared mount so spark-submit and the notebook see one catalog
 METASTORE_DIR = "/opt/data/metastore_db"
 METASTORE_URL = f"jdbc:derby:;databaseName={METASTORE_DIR};create=true"
 
@@ -68,11 +66,9 @@ def create_stage_table(spark):
 def main():
     spark = (
         SparkSession.builder.appName("stage_table")
-        .config("spark.sql.sources.partitionOverwriteMode", "dynamic")
         .config("spark.sql.warehouse.dir", WAREHOUSE)
+        .config("spark.sql.sources.partitionOverwriteMode", "dynamic")
         .config("javax.jdo.option.ConnectionURL", METASTORE_URL)
-        # without this the catalog is in-memory, the ConnectionURL is
-        # ignored, and the table dies with the process
         .enableHiveSupport()
         .getOrCreate()
     )

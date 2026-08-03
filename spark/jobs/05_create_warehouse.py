@@ -11,9 +11,9 @@ Run:
 from pyspark.sql import SparkSession
 
 WAREHOUSE = "/opt/data/warehouse"
-
 METASTORE_DIR = "/opt/data/metastore_db"
 METASTORE_URL = f"jdbc:derby:;databaseName={METASTORE_DIR};create=true"
+
 
 # parquet enforces no constraints, so PK/FK/CHECK and indexes have no
 # equivalent here; the notebook validates the ranges instead
@@ -107,8 +107,8 @@ def create_table(spark, name, columns, partitions):
 def main():
     spark = (
         SparkSession.builder.appName("create_warehouse")
-        .config("spark.sql.sources.partitionOverwriteMode", "dynamic")
         .config("spark.sql.warehouse.dir", WAREHOUSE)
+        .config("spark.sql.sources.partitionOverwriteMode", "dynamic")
         .config("javax.jdo.option.ConnectionURL", METASTORE_URL)
         .enableHiveSupport()
         .getOrCreate()

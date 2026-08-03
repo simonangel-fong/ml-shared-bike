@@ -14,9 +14,9 @@ from pyspark.sql import SparkSession, functions as F
 
 WAREHOUSE = "/opt/data/warehouse"
 STAGE_TRIPS_PATH = f"{WAREHOUSE}/stage_trips"
-
 METASTORE_DIR = "/opt/data/metastore_db"
 METASTORE_URL = f"jdbc:derby:;databaseName={METASTORE_DIR};create=true"
+
 
 # month first: december files hold 12 in the first field and 1-31 in the second
 TS_FORMAT = "MM/dd/yyyy HH:mm"
@@ -106,8 +106,8 @@ def repair(df):
 def main():
     spark = (
         SparkSession.builder.appName("transform")
-        .config("spark.sql.sources.partitionOverwriteMode", "dynamic")
         .config("spark.sql.warehouse.dir", WAREHOUSE)
+        .config("spark.sql.sources.partitionOverwriteMode", "dynamic")
         .config("javax.jdo.option.ConnectionURL", METASTORE_URL)
         .enableHiveSupport()
         .getOrCreate()
