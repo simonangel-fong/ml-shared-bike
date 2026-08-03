@@ -100,6 +100,8 @@ services:
     volumes:
       - ./notebooks:/home/jovyan/work
       - ../data:/opt/data
+      # jobs needing driver-only packages (holidays) run from here
+      - ./jobs:/opt/jobs
     networks:
       - spark-net
     depends_on:

@@ -4,11 +4,14 @@
 
 - [PySpark Warehouse](#pyspark-warehouse)
   - [Objective](#objective)
+  - [Data Warehouse](#data-warehouse)
   - [phases](#phases)
   - [Development](#development)
     - [init spark](#init-spark)
     - [stage table](#stage-table)
     - [extract data](#extract-data)
+    - [transform data](#transform-data)
+    - [create warehouse](#create-warehouse)
 
 ---
 
@@ -28,6 +31,71 @@ reference:
 source
 
 - `data/raw/<year>/*.csv`
+
+---
+
+## Data Warehouse
+
+- Table: `dim_date`
+  - ~1,825 rows (2019-01-01 → 2023-12-31)
+
+| Col                 | Type    | Desc                                      |
+| ------------------- | ------- | ----------------------------------------- |
+| dim_date_id         | DATE    | PK, the calendar date itself              |
+| dim_date_year       | INT     | 2019–2023                                 |
+| dim_date_quarter    | INT     | 1–4                                       |
+| dim_date_month      | INT     | 1–12                                      |
+| dim_date_day        | INT     | 1–31                                      |
+| dim_date_week       | INT     | ISO week, 1–53                            |
+| dim_date_weekday    | INT     | 1–7, Sunday-first (Spark dayofweek)       |
+| dim_date_is_weekend | BOOLEAN | weekday in (1,7)                          |
+| dim_date_is_holiday | BOOLEAN | Ontario holidays via the holidays package |
+| dim_date_season     | STRING  | winter/spring/summer/fall                 |
+
+- Table: `dim_station`
+
+| Col              | Type   | Desc                             |
+| ---------------- | ------ | -------------------------------- |
+| dim_station_id   | INT    | PK, natural key from source      |
+| dim_station_name | STRING | latest name seen for the station |
+
+- Table: `dim_bike`
+
+| Col            | Type   | Desc                        |
+| -------------- | ------ | --------------------------- |
+| dim_bike_id    | INT    | PK, natural key from source |
+| dim_bike_model | STRING | UNKNOWN for 2019–2023       |
+
+- Table: `dim_user_type`
+
+| Col                | Type   | Desc               |
+| ------------------ | ------ | ------------------ |
+| dim_user_type_id   | INT    | PK, surrogate 1..n |
+| dim_user_type_name | STRING | annual / casual    |
+
+- Table: `fact_trip`
+  - ~18,920,187 rows
+  - partitioned by start_year, start_month
+
+| Col                        | Type      | Desc                 |
+| -------------------------- | --------- | -------------------- |
+| fact_trip_id               | BIGINT    | PK, surrogate        |
+| fact_trip_source_id        | INT       | source trip_id       |
+| fact_trip_duration         | INT       | seconds              |
+| fact_trip_start_ts         | TIMESTAMP | full start timestamp |
+| fact_trip_end_ts           | TIMESTAMP | full end timestamp   |
+| fact_trip_start_date_id    | DATE      | → dim_date           |
+| fact_trip_end_date_id      | DATE      | → dim_date           |
+| fact_trip_start_hour       | INT       | 0–23                 |
+| fact_trip_start_minute     | INT       | 0–59                 |
+| fact_trip_end_hour         | INT       | 0–23                 |
+| fact_trip_end_minute       | INT       | 0–59                 |
+| fact_trip_start_station_id | INT       | → dim_station        |
+| fact_trip_end_station_id   | INT       | → dim_station        |
+| fact_trip_bike_id          | INT       | → dim_bike           |
+| fact_trip_user_type_id     | INT       | → dim_user_type      |
+| start_year                 | INT       | partition key        |
+| start_month                | INT       | partition key        |
 
 ---
 
@@ -94,4 +162,23 @@ docker compose -f spark/docker-compose.yml exec spark-master /opt/spark/bin/spar
 
 ```sh
 docker compose -f spark/docker-compose.yml exec spark-master /opt/spark/bin/spark-submit --master spark://spark-master:7077 /opt/jobs/05_create_warehouse.py
+```
+
+---
+
+### load data
+
+`dim_date` runs from the jupyter container: the calendar is built in the
+driver with `holidays`, which is only installed in that image. It runs
+`local[*]` — ~1,800 rows needs no cluster, and the executors run as a
+different uid than this container.
+
+```sh
+docker compose -f spark/docker-compose.yml exec jupyter /usr/local/spark/bin/spark-submit --master local[*] /opt/jobs/06_load_dim_date.py
+```
+
+`dim_station` reads the full stage table, so it runs on the cluster.
+
+```sh
+docker compose -f spark/docker-compose.yml exec spark-master /opt/spark/bin/spark-submit --master spark://spark-master:7077 /opt/jobs/07_load_dim_station.py
 ```

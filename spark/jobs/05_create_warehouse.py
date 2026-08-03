@@ -15,20 +15,23 @@ WAREHOUSE = "/opt/data/warehouse"
 METASTORE_DIR = "/opt/data/metastore_db"
 METASTORE_URL = f"jdbc:derby:;databaseName={METASTORE_DIR};create=true"
 
-# parquet enforces no constraints, so the reference's PK/FK/CHECK and its
-# indexes have no equivalent here; the notebook validates the ranges instead
+# parquet enforces no constraints, so PK/FK/CHECK and indexes have no
+# equivalent here; the notebook validates the ranges instead
 TABLES = {
-    "dim_time": (
+    # date grain, not minute: ~1.8k rows against 18.9M facts, small enough to
+    # broadcast, and the only level carrying attributes worth normalizing
+    "dim_date": (
         """
-        dim_time_id      TIMESTAMP,
-        dim_time_year    INT,
-        dim_time_quarter INT,
-        dim_time_month   INT,
-        dim_time_day     INT,
-        dim_time_week    INT,
-        dim_time_weekday INT,
-        dim_time_hour    INT,
-        dim_time_minute  INT
+        dim_date_id         DATE,
+        dim_date_year       INT,
+        dim_date_quarter    INT,
+        dim_date_month      INT,
+        dim_date_day        INT,
+        dim_date_week       INT,
+        dim_date_weekday    INT,
+        dim_date_is_weekend BOOLEAN,
+        dim_date_is_holiday BOOLEAN,
+        dim_date_season     STRING
         """,
         [],
     ),
@@ -53,20 +56,26 @@ TABLES = {
         """,
         [],
     ),
+    # time of day lives here as plain ints: 1,440 possible values with no
+    # attributes to hang off them is a measure, not a dimension
     "fact_trip": (
         """
         fact_trip_id               BIGINT,
         fact_trip_source_id        INT,
         fact_trip_duration         INT,
-        fact_trip_start_time_id    TIMESTAMP,
-        fact_trip_end_time_id      TIMESTAMP,
+        fact_trip_start_ts         TIMESTAMP,
+        fact_trip_end_ts           TIMESTAMP,
+        fact_trip_start_date_id    DATE,
+        fact_trip_end_date_id      DATE,
+        fact_trip_start_hour       INT,
+        fact_trip_start_minute     INT,
+        fact_trip_end_hour         INT,
+        fact_trip_end_minute       INT,
         fact_trip_start_station_id INT,
         fact_trip_end_station_id   INT,
         fact_trip_bike_id          INT,
         fact_trip_user_type_id     INT
         """,
-        # the reference range-partitions by year with monthly subpartitions;
-        # directory partitioning is the equivalent
         ["start_year INT", "start_month INT"],
     ),
 }
@@ -105,10 +114,17 @@ def main():
         .getOrCreate()
     )
 
+    # the previous design normalized time to the minute
+    spark.sql("DROP TABLE IF EXISTS dim_time")
+
     for name, (columns, partitions) in TABLES.items():
         create_table(spark, name, columns, partitions)
         df = spark.table(name)
-        part = f"  partitioned by {[p.split()[0] for p in partitions]}" if partitions else ""
+        part = (
+            f"  partitioned by {[p.split()[0] for p in partitions]}"
+            if partitions
+            else ""
+        )
         print(f"{name:15s} {len(df.columns):2d} columns{part}")
 
     print()
