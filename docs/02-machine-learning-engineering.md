@@ -7,7 +7,7 @@
   - [ML Application](#ml-application)
   - [ML](#ml)
   - [Development](#development)
-    - [Spin up notebook](#spin-up-notebook)
+    - [Spin up](#spin-up)
 
 ---
 
@@ -53,12 +53,14 @@ Use case:
 
 ## Development
 
-### Spin up notebook
+### Spin up
 
 ```sh
 docker compose -f ml/docker-compose.yaml up -d --build
 
 docker compose -f ml/docker-compose.yaml ps
-# NAME         IMAGE        COMMAND                  SERVICE   CREATED         STATUS                   PORTS
-# ml-jupyter   ml-jupyter   "tini -g -- start.sh…"   jupyter   3 minutes ago   Up 2 minutes (healthy)   0.0.0.0:8888->8888/tcp, [::]:8888->8888/tcp
+# NAME          IMAGE                COMMAND                  SERVICE    CREATED          STATUS                    PORTS
+# ml-jupyter    ml-jupyter           "tini -g -- start.sh…"   jupyter    35 seconds ago   Up 16 seconds (healthy)   0.0.0.0:8888->8888/tcp, [::]:8888->8888/tcp
+# ml-mlflow     ml-mlflow            "mlflow server --hos…"   mlflow     38 seconds ago   Up 34 seconds (healthy)   0.0.0.0:5000->5000/tcp, [::]:5000->5000/tcp
+# ml-postgres   postgres:16-alpine   "docker-entrypoint.s…"   postgres   3 minutes ago    Up 3 minutes (healthy)    5432/tcp
 ```
