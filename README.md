@@ -43,4 +43,13 @@ ref:
 - https://oneuptime.com/blog/post/2026-02-23-create-sagemaker-notebooks-in-terraform/view#lifecycle-configurations\
 - https://medium.com/@mohitverma160288/sagemaker-terraform-multi-account-mlops-pt-2-03278d0c94cf
 
-export MSYS_NO_PATHCONV=1; docker exec ml-jupyter rm -rf /opt/data/ml/featured/annual && echo "removed corrupt featured/annual"; docker stats --no-stream --format "{{.Name}}\t{{.MemUsage}}" 2>&1
+
+- update docs
+  - refine the docs, keep it concise and clear
+  - update phase table to show how I implement
+    - just keep phase at high level
+  - output key commands
+  - add a mlflow section to describe
+    - what is mlflow(oneline definition), 
+    - common use cases, list 3 bullet points
+    - what I used in my project; keep it simple

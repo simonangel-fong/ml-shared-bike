@@ -8,6 +8,7 @@
   - [ML](#ml)
   - [Development](#development)
     - [Spin up](#spin-up)
+  - [Upload the selected model to S3](#upload-the-selected-model-to-s3)
     - [Clean up](#clean-up)
 
 ---
@@ -66,6 +67,50 @@ docker compose -f ml/docker-compose.yaml ps
 # ml-postgres   postgres:16-alpine   "docker-entrypoint.s…"   postgres   3 minutes ago    Up 3 minutes (healthy)    5432/tcp
 
 ```
+
+---
+
+## Upload the selected model to S3
+
+The comparison recommends `q80`, registered as `annual-demand-q80` and aliased
+`@champion`. Resolve the alias to its artifact directory, then copy that
+directory — it holds the model plus the signature and pinned requirements a
+serving process needs.
+
+```sh
+# resolve the champion alias to its artifact path
+docker compose -f ml/docker-compose.yaml exec jupyter python -c "
+import os, mlflow
+mlflow.set_tracking_uri(os.environ['MLFLOW_TRACKING_URI'])
+v = mlflow.MlflowClient().get_model_version_by_alias('annual-demand-q80', 'champion')
+print(v.source.split('/')[-1])
+"
+# m-a518bbcd0673404b987fbd741f174d13
+
+# upload (substitute the id above)
+aws s3 cp ml/artifacts/2/models/m-a518bbcd0673404b987fbd741f174d13 \
+  s3://toronto-shared-bike-data-warehouse-data-bucket/ml/models/annual-demand-q80/v1 \
+  --recursive
+```
+
+Contents (~12 MB):
+
+| File                                  | Purpose                             |
+| ------------------------------------- | ----------------------------------- |
+| `model.skops`                         | the fitted pipeline                 |
+| `MLmodel`                             | flavour and input/output signature  |
+| `requirements.txt`, `python_env.yaml` | pinned versions for the serving env |
+| `input_example.json`                  | a valid request, for smoke-testing  |
+
+Load it back with:
+
+```sh
+aws s3 cp s3://toronto-shared-bike-data-warehouse-data-bucket/models/annual-demand-q80/v1 ./model --recursive
+python -c "import mlflow; m = mlflow.sklearn.load_model('./model')"
+```
+
+> The prediction is a **stocking target**, not expected demand: q80 means
+> "stock to this level and ~80% of hours are covered".
 
 ---
 

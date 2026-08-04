@@ -8,7 +8,6 @@ services:
     restart: unless-stopped
     environment:
       JUPYTER_TOKEN: ${JUPYTER_TOKEN:-}
-      # same network, so the server is reachable by service name
       MLFLOW_TRACKING_URI: http://mlflow:5000
     ports:
       - "8888:8888"

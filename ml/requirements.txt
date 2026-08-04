@@ -1,17 +1,12 @@
-# Provisions the ml-jupyter container (ml/Dockerfile).
-# Separate from spark/jupyter/requirements.txt, which provisions the Spark container.
 scikit-learn>=1.5
 pyarrow>=17.0
-# 18.9M trip rows: duckdb aggregates the export out-of-core, pandas takes over
-# once the result is small. pandas 3.0 is a breaking release — pin below it.
 duckdb>=1.1
+# pandas 3.0 is a breaking release
 pandas>=2.2,<3
-# duckdb refuses to read *or write* its progress-bar setting under a Jupyter
-# kernel without this, so it is required, not cosmetic.
+# duckdb refuses to read or write its progress-bar setting under a Jupyter
+# kernel without this - required, not cosmetic
 ipywidgets>=8.1
 matplotlib>=3.9
 joblib>=1.4
-# Tracking client. Server runs in mlflow/docker-compose.yml — keep the major
-# version aligned with the server image (v3). MLflow 2.x caps pyarrow<20, which
-# conflicts with the pyarrow>=17 above.
+# keep the major version aligned with Dockerfile.mlflow
 mlflow>=3.1,<4
