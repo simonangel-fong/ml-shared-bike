@@ -210,3 +210,43 @@ The job reproduces the local and notebook metrics to four decimals.
 > conflicts during the upgrade. Those pins belong to the container's serving
 > stack, which training does not use - the job succeeds. They would matter if
 > this image were used for inference.
+
+---
+
+### CI
+
+`.github/workflows/train.yml` submits the same job on a push to `mlops/` on
+`master`, or on demand. No AWS keys are stored: the workflow exchanges a
+GitHub OIDC token for `github_actions_role_arn`, whose trust policy accepts
+only this repo on this branch.
+
+One-time setup - three repo variables under **Settings → Secrets and variables
+→ Actions → Variables**. None are secret; they are ARNs and a bucket name.
+
+```sh
+terraform -chdir=infra output -raw github_actions_role_arn
+# arn:aws:iam::099139718958:role/toronto-shared-bike-ml-github-actions-role
+```
+
+| Variable             | Value                                       |
+| -------------------- | ------------------------------------------- |
+| `AWS_ROLE_ARN`       | `github_actions_role_arn` output            |
+| `ML_BUCKET`          | `ml_bucket_name` output                     |
+| `SAGEMAKER_ROLE_ARN` | `sagemaker_execution_role_arn` output       |
+
+Run it from the Actions tab, or:
+
+```sh
+# no cost - checks OIDC and the variables without submitting
+gh workflow run train.yml -f dry_run=true
+
+gh workflow run train.yml
+gh run watch
+```
+
+> Trigger the first run with `dry_run=true`. It exercises the whole identity
+> path - assume role, resolve variables, build the estimator - and stops before
+> spending anything, so a failure is unambiguously auth or config.
+
+> `cancel-in-progress` is off. Cancelling the runner would abandon the
+> SageMaker job rather than stop it, leaving it to bill unwatched.

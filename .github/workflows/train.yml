@@ -1,0 +1,60 @@
+name: train
+
+# Training costs money, so the triggers are deliberately narrow: a change to
+# the training code on master, or a manual run.
+on:
+  push:
+    branches: [master]
+    paths:
+      - "mlops/**"
+      - ".github/workflows/train.yml"
+  workflow_dispatch:
+    inputs:
+      quantile:
+        description: "quantile to fit"
+        default: "0.8"
+      dry_run:
+        description: "print the plan without submitting"
+        type: boolean
+        default: false
+
+# A second push supersedes a queued run rather than training twice in
+# parallel. In-flight jobs are left alone - cancelling the runner would orphan
+# the SageMaker job, not stop it.
+concurrency:
+  group: train-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  id-token: write # required to request the OIDC token
+  contents: read
+
+jobs:
+  train:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install submit-side deps
+        run: pip install -r mlops/requirements-dev.txt
+
+      - name: Assume AWS role
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ca-central-1
+
+      - name: Submit training job
+        run: |
+          python mlops/submit.py \
+            ${{ (github.event_name == 'workflow_dispatch' && inputs.dry_run) && '--dry-run' || '' }} \
+            --quantile ${{ inputs.quantile || '0.8' }} \
+            --bucket ${{ vars.ML_BUCKET }} \
+            --role ${{ vars.SAGEMAKER_ROLE_ARN }}
