@@ -42,3 +42,5 @@ ref:
 - https://oneuptime.com/blog/post/2026-02-23-how-to-build-an-ai-ml-pipeline-infrastructure-with-terraform/view
 - https://oneuptime.com/blog/post/2026-02-23-create-sagemaker-notebooks-in-terraform/view#lifecycle-configurations\
 - https://medium.com/@mohitverma160288/sagemaker-terraform-multi-account-mlops-pt-2-03278d0c94cf
+
+export MSYS_NO_PATHCONV=1; docker exec ml-jupyter rm -rf /opt/data/ml/featured/annual && echo "removed corrupt featured/annual"; docker stats --no-stream --format "{{.Name}}\t{{.MemUsage}}" 2>&1
