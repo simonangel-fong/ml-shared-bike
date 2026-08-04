@@ -1,16 +1,7 @@
 # github-oidc.tf
-#
-# Lets GitHub Actions submit training jobs with no long-lived AWS keys: the
-# workflow exchanges a short-lived OIDC token for this role.
 
 locals {
   github_branch = "master"
-
-  # Immutable subject claim. Repos created or transferred after 2026-07-15 get
-  # numeric owner/repo IDs appended with "@", so the name-based form
-  # "repo:owner/name:ref:..." no longer matches and the assume fails with a
-  # bare "Not authorized" - the trust policy is never even reached.
-  #
   # IDs are stable across renames, which is the point:
   #   gh api repos/simonangel-fong/ml-shared-bike --jq '{id, owner_id: .owner.id}'
   github_owner    = "simonangel-fong"
@@ -28,8 +19,6 @@ locals {
 # ##############################
 # OIDC provider
 # ##############################
-# One provider per URL per account, created outside this stack. Referenced
-# rather than managed here so applying does not fight whatever owns it.
 data "aws_iam_openid_connect_provider" "github" {
   url = "https://token.actions.githubusercontent.com"
 }
@@ -53,8 +42,7 @@ data "aws_iam_policy_document" "github_assume" {
       values   = ["sts.amazonaws.com"]
     }
 
-    # Scoped to one repo and one branch. Without this any GitHub repo could
-    # assume the role - it is the security boundary of the whole setup.
+    # Scoped to repo and branch.
     condition {
       test     = "StringEquals"
       variable = "token.actions.githubusercontent.com:sub"
@@ -73,8 +61,6 @@ resource "aws_iam_role" "github_actions" {
 # ##############################
 # IAM: CI permissions
 # ##############################
-# Narrower than the execution role: CI submits jobs and reads results, it does
-# not train. The training container runs as sagemaker_execution.
 data "aws_iam_policy_document" "github_actions" {
   statement {
     sid    = "SubmitAndPollTrainingJobs"
@@ -91,8 +77,6 @@ data "aws_iam_policy_document" "github_actions" {
     resources = ["*"]
   }
 
-  # CI does not train - it hands the execution role to SageMaker, which does.
-  # Submission fails without this, and the error does not name PassRole.
   statement {
     sid       = "PassExecutionRoleToSageMaker"
     effect    = "Allow"

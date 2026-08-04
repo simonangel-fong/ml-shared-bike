@@ -1,0 +1,19 @@
+# Installed by the sklearn container at endpoint start, before inference.py.
+#
+# The pins match mlops/requirements.txt. A model.skops written by scikit-learn
+# 1.9.0 will not load under the image's stock 1.4.2, and HistGradientBoosting
+# internals shift between minor versions - serving must match training exactly.
+#
+# Every pin below has a cp312 manylinux wheel (skops is py3-none-any), so cold
+# start is downloads only. Keep it that way when bumping: a version without a
+# wheel compiles numpy/scipy inside a 3GB serverless container and times out
+# rather than failing cleanly.
+#
+# No --only-binary here. The container installs this file with `pip install .
+# -r requirements.txt` from the code directory, so the flag would also forbid
+# building the local inference package itself, which is a source tree.
+scikit-learn==1.9.0
+pandas==2.3.3
+numpy==2.5.1
+scipy==1.18.0
+skops==0.14.0
