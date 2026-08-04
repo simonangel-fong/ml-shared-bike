@@ -1,0 +1,15 @@
+# Installed inside the training container. SageMaker pip-installs this file
+# from source_dir before running train.py.
+#
+# The prebuilt sagemaker-scikit-learn image tops out at scikit-learn 1.4.2; the
+# reference metrics come from 1.9.0, so this file upgrades it in place. The pin
+# is exact on purpose - HistGradientBoostingRegressor internals shift between
+# minor versions, and the acceptance check compares metrics to 4 decimals.
+#
+# Laptop-side deps for submitting jobs live in requirements-dev.txt.
+scikit-learn==1.9.0
+pandas==2.3.3
+numpy==2.5.1
+scipy==1.18.0
+pyarrow==17.0.0
+skops==0.14.0

@@ -225,6 +225,13 @@ ml/artifacts/
 # MLflow artifact store (mlflow/docker-compose.yml bind mount)
 mlflow/artifacts/
 
+# Local output of mlops/train.py (model.skops is ~11 MB per run)
+mlops/output/
+
+# Training job artifacts pulled down from S3 for inspection
+model.tar.gz
+metrics.json
+
 # Terraform
 #   Provider plugins and local caches (can be hundreds of MB)
 **/.terraform/*

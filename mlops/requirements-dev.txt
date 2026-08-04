@@ -1,0 +1,8 @@
+# Laptop-side only: submitting training jobs. NOT installed in the container -
+# mlops/requirements.txt is what runs inside the job.
+#
+# Pinned to v2 deliberately. SDK v3 removed the framework estimators (SKLearn,
+# PyTorch, ...) in favour of ModelTrainer, with no compatibility layer, so
+# submit.py would not run against it.
+sagemaker>=2.208,<3
+boto3>=1.34

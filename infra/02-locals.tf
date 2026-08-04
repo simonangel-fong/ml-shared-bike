@@ -5,10 +5,9 @@ locals {
   # ##############################
   # Metadata
   # ##############################
-  project     = "ml-shared-bike"
-  prefix_name = "${local.project}-${var.env}"
+  prefix_name = "${var.project}-${var.env}"
   default_tags = {
-    Project   = local.project
+    Project   = var.project
     Env       = var.env
     ManagedBy = "Terraform"
   }

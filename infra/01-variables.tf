@@ -1,12 +1,9 @@
 # variables.tf
 
 variable "env" {
-  default = "dev"
+  default = "ml"
 }
 
-variable "data_scientists" {
-  default = {
-    Alice = "alice"
-    # Bob   = "bob"
-  }
+variable "project" {
+  default = "toronto-shared-bike"
 }

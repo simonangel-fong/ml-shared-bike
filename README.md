@@ -33,3 +33,13 @@ ref:
 
 - [Data Engineering - Data warehouse(spark)](./docs/01-de-warehouse.md)
 - [Machine Learning Engineering - Jupter Notebook & MLflow](./docs/02-ml.md)
+
+
+---
+
+feature of the project
+
+local train
+mlops pipeline: github actions + sagemaker
+app: s3(html) lambda(docker) + api gateway + cloudfront + dns
+devops pipeline: github actions(tf + docker image)

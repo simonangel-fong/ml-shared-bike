@@ -1,5 +1,8 @@
 # providers.tf
 
+# ##############################
+# Versions
+# ##############################
 terraform {
   required_version = ">= 1.5.0"
 
@@ -8,11 +11,18 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.0"
     }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.0"
+    }
   }
 
   backend "s3" {}
 }
 
+# ##############################
+# Providers
+# ##############################
 provider "aws" {
   region = local.aws_region
 
@@ -21,4 +31,4 @@ provider "aws" {
   }
 }
 
-provider "random" {}
+data "aws_caller_identity" "current" {}
