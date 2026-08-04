@@ -1,7 +1,6 @@
 name: train
 
-# Training costs money, so the triggers are deliberately narrow: a change to
-# the training code on master, or a manual run.
+# Training costs money, so the triggers are narrow.
 on:
   push:
     branches: [master]
@@ -18,9 +17,8 @@ on:
         type: boolean
         default: false
 
-# A second push supersedes a queued run rather than training twice in
-# parallel. In-flight jobs are left alone - cancelling the runner would orphan
-# the SageMaker job, not stop it.
+# Not cancel-in-progress: killing the runner orphans the SageMaker job rather
+# than stopping it, leaving it to bill unwatched.
 concurrency:
   group: train-${{ github.ref }}
   cancel-in-progress: false
@@ -35,18 +33,20 @@ jobs:
     timeout-minutes: 60
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
           cache: pip
+          # Default patterns are root-level and would not match this file.
+          cache-dependency-path: mlops/requirements-dev.txt
 
       - name: Install submit-side deps
         run: pip install -r mlops/requirements-dev.txt
 
       - name: Assume AWS role
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ vars.AWS_ROLE_ARN }}
           aws-region: ca-central-1

@@ -1,30 +1,30 @@
 # MLOps
 
-[Back](../../README.md)
+[Back](../README.md)
 
 - [MLOps](#mlops)
   - [Goal](#goal)
   - [Pipeline](#pipeline)
   - [Files](#files)
-  - [Steps](#steps)
-  - [Not now](#not-now)
-  - [Devlopment](#devlopment)
+  - [Development](#development)
     - [Data to S3](#data-to-s3)
     - [Local Run](#local-run)
     - [Training job](#training-job)
+    - [CI/CD](#cicd)
 
 ---
 
 ## Goal
 
 **Make it work:** a push to `mlops/` runs the training on SageMaker instead of
-on the laptop, and leaves the model on S3.
+on the laptop, and leaves the model on S3. Done.
 
-That is the whole of this stage. Not automatic promotion, not a gate, not
+That was the whole of this stage. Not automatic promotion, not a gate, not
 drift. One trigger, one training job, one artifact.
 
 Reference: `ml/notebooks/05-train-quantile.ipynb` - the shipped
-`annual-demand-q80` model. The notebooks stay as they are.
+`annual-demand-q80` model. The notebooks stay as they are; the job reproduces
+their metrics to four decimals.
 
 ---
 
@@ -40,9 +40,8 @@ automatically - read `metrics.json`, and if it looks good, register the model
 by hand as today.
 
 **Tracking.** The job writes `metrics.json` next to the model on S3. Local
-MLflow stays for exploration. Managed MLflow is ~$0.64/hr with no scale-to-zero
-
-- roughly $470/month for a model retrained annually, so not now.
+MLflow stays for exploration. Managed MLflow is ~$0.64/hr with no
+scale-to-zero - roughly $470/month for a model retrained annually, so not now.
 
 ---
 
@@ -50,57 +49,40 @@ MLflow stays for exploration. Managed MLflow is ~$0.64/hr with no scale-to-zero
 
 ```
 mlops/
-  train.py            runs inside the container
-  submit.py           builds the estimator, calls .fit()
-  requirements.txt
+  train.py                 runs inside the container
+  submit.py                builds the estimator, calls .fit()
+  requirements.txt         installed in the container - pins sklearn 1.9.0
+  requirements-dev.txt     laptop/runner only - sagemaker SDK, pinned <3
 .github/workflows/
   train.yml
+infra/
+  github-oidc.tf           CI role and trust policy
 ```
 
 Two scripts. Config lives in `submit.py` as constants until there is a second
 model to justify a config file.
 
----
-
-## Steps
-
-| #   | Step        | Done when                                             |
-| --- | ----------- | ----------------------------------------------------- |
-| 1   | Data to S3  | the annual split is on the `ml_data` bucket           |
-| 2   | `train.py`  | runs locally, reproduces the notebook's q80 metrics   |
-| 3   | `submit.py` | trains on SageMaker from the laptop                   |
-| 4   | CI identity | GitHub OIDC role, `PassRole` on `sagemaker_execution` |
-| 5   | `train.yml` | a push to `mlops/` produces a model on S3             |
-
-Step 2 is the one that matters. If the script does not reproduce the notebook's
-numbers, automating it just produces wrong models faster.
-
 `train.py` is notebook steps 1-3 without the plots: read the split from
-`/opt/ml/input/data/`, fit, score, write the model and `metrics.json` to
-`/opt/ml/model/`. Keep the leakage assert (train < val < test by `start_date`)
+`/opt/ml/input/data/`, fit, score, write `model.skops` and `metrics.json` to
+`/opt/ml/model/`. It keeps the leakage assert (train < val < test by
+`start_date`) - three lines against a silent, expensive mistake.
 
-- it is three lines and catches a silent, expensive mistake.
+`submit.py` takes `--bucket` and `--role` rather than discovering them: an
+earlier version scanned IAM and silently picked up an unmanaged QuickSetup
+role. Everything persistent is Terraform's.
 
-Estimator: `sagemaker.sklearn.SKLearn` on `ml.m5.xlarge`, with a max runtime
-set so a stuck job cannot bill overnight.
+S3 layout on `ml_bucket_name`:
 
----
-
-## Not now
-
-Each of these is a later stage. Listed so they read as deferred, not forgotten.
-
-| Deferred         | Revisit when                                   |
-| ---------------- | ---------------------------------------------- |
-| Promotion gate   | the pipeline has run a few times by hand first |
-| DVC on `data/`   | data actually changes                          |
-| Hosted MLflow    | the cost is justified by retrain frequency     |
-| Serving endpoint | there is a consumer for predictions            |
-| Drift monitoring | there is production traffic                    |
+```
+data/split/              train/val/test parquet + split.json
+trains/<job-name>/
+  source/sourcedir.tar.gz    uploaded by the SDK
+  output/model.tar.gz        model.skops + metrics.json
+```
 
 ---
 
-## Devlopment
+## Development
 
 ### Data to S3
 
@@ -202,9 +184,10 @@ The job reproduces the local and notebook metrics to four decimals.
 
 > **Why the `py312` image.** The default `1.4-2` image runs Python 3.10, and
 > scikit-learn 1.9.0 - the version behind the reference metrics - requires
-> >=3.11. Both images ship sklearn 1.4.2; `mlops/requirements.txt` upgrades it
-> in place, which only resolves on 3.12. The image URI is pinned in
-> `submit.py` because the SDK's bundled registry does not list that tag.
+>
+> > =3.11. Both images ship sklearn 1.4.2; `mlops/requirements.txt` upgrades it
+> > in place, which only resolves on 3.12. The image URI is pinned in
+> > `submit.py` because the SDK's bundled registry does not list that tag.
 
 > Pip prints `sagemaker-sklearn-container 2.0 requires numpy==2.1.0 ...`
 > conflicts during the upgrade. Those pins belong to the container's serving
@@ -213,28 +196,27 @@ The job reproduces the local and notebook metrics to four decimals.
 
 ---
 
-### CI
+### CI/CD
 
 `.github/workflows/train.yml` submits the same job on a push to `mlops/` on
-`master`, or on demand. No AWS keys are stored: the workflow exchanges a
+`master`, or on demand. No AWS keys are stored - the workflow exchanges a
 GitHub OIDC token for `github_actions_role_arn`, whose trust policy accepts
 only this repo on this branch.
 
-One-time setup - three repo variables under **Settings → Secrets and variables
-→ Actions → Variables**. None are secret; they are ARNs and a bucket name.
+One-time setup: three repo variables under **Settings → Secrets and variables →
+Actions → Variables**. None are secret - they are ARNs and a bucket name.
+
+| Variable             | From                                  |
+| -------------------- | ------------------------------------- |
+| `AWS_ROLE_ARN`       | `github_actions_role_arn` output      |
+| `ML_BUCKET`          | `ml_bucket_name` output               |
+| `SAGEMAKER_ROLE_ARN` | `sagemaker_execution_role_arn` output |
 
 ```sh
-terraform -chdir=infra output -raw github_actions_role_arn
-# arn:aws:iam::099139718958:role/toronto-shared-bike-ml-github-actions-role
+terraform -chdir=infra output
 ```
 
-| Variable             | Value                                       |
-| -------------------- | ------------------------------------------- |
-| `AWS_ROLE_ARN`       | `github_actions_role_arn` output            |
-| `ML_BUCKET`          | `ml_bucket_name` output                     |
-| `SAGEMAKER_ROLE_ARN` | `sagemaker_execution_role_arn` output       |
-
-Run it from the Actions tab, or:
+Run from the Actions tab, or:
 
 ```sh
 # no cost - checks OIDC and the variables without submitting
@@ -242,11 +224,33 @@ gh workflow run train.yml -f dry_run=true
 
 gh workflow run train.yml
 gh run watch
+# ✓ master train · 30953413046
+# Triggered via workflow_dispatch about 5 minutes ago
+#
+# JOBS
+# ✓ train in 4m31s (ID 92140740243)
+#   ✓ Set up job
+#   ✓ Run actions/checkout@v4
+#   ✓ Run actions/setup-python@v5
+#   ✓ Install submit-side deps
+#   ✓ Assume AWS role
+#   ✓ Submit training job
+#   ✓ Complete job
 ```
 
-> Trigger the first run with `dry_run=true`. It exercises the whole identity
-> path - assume role, resolve variables, build the estimator - and stops before
-> spending anything, so a failure is unambiguously auth or config.
+> Start with `dry_run=true`. It exercises the whole identity path - assume role,
+> resolve variables, build the estimator - and stops before spending anything,
+> so a failure is unambiguously auth or config.
 
-> `cancel-in-progress` is off. Cancelling the runner would abandon the
-> SageMaker job rather than stop it, leaving it to bill unwatched.
+> **The trust policy needs numeric IDs.** Repos created after 2026-07-15 use
+> immutable subject claims: `repo:owner@<owner-id>/name@<repo-id>:ref:...`. The
+> older name-based form fails with a bare "Not authorized to perform
+> sts:AssumeRoleWithWebIdentity" - the policy is never reached, so the message
+> does not say why. The IDs are in `infra/github-oidc.tf`:
+>
+> ```sh
+> gh api repos/simonangel-fong/ml-shared-bike --jq '{id, owner_id: .owner.id}'
+> ```
+
+> `cancel-in-progress` is off: cancelling the runner abandons the SageMaker job
+> rather than stopping it.

@@ -4,8 +4,25 @@
 # workflow exchanges a short-lived OIDC token for this role.
 
 locals {
-  github_repo   = "simonangel-fong/ml-shared-bike"
   github_branch = "master"
+
+  # Immutable subject claim. Repos created or transferred after 2026-07-15 get
+  # numeric owner/repo IDs appended with "@", so the name-based form
+  # "repo:owner/name:ref:..." no longer matches and the assume fails with a
+  # bare "Not authorized" - the trust policy is never even reached.
+  #
+  # IDs are stable across renames, which is the point:
+  #   gh api repos/simonangel-fong/ml-shared-bike --jq '{id, owner_id: .owner.id}'
+  github_owner    = "simonangel-fong"
+  github_owner_id = "64545430"
+  github_repo     = "ml-shared-bike"
+  github_repo_id  = "1314382375"
+
+  github_sub = join("", [
+    "repo:${local.github_owner}@${local.github_owner_id}",
+    "/${local.github_repo}@${local.github_repo_id}",
+    ":ref:refs/heads/${local.github_branch}",
+  ])
 }
 
 # ##############################
@@ -41,7 +58,7 @@ data "aws_iam_policy_document" "github_assume" {
     condition {
       test     = "StringEquals"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:${local.github_repo}:ref:refs/heads/${local.github_branch}"]
+      values   = [local.github_sub]
     }
   }
 }

@@ -33,7 +33,8 @@ ref:
 
 - [Data Engineering - Data warehouse(spark)](./docs/01-de-warehouse.md)
 - [Machine Learning Engineering - Jupter Notebook & MLflow](./docs/02-ml.md)
-
+- [MLOps - Amazon Sagemaker & GitHub Actions](./docs/04-mlops.md)
+- 
 
 ---
 
