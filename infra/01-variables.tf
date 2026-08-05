@@ -12,16 +12,10 @@ variable "project" {
 }
 
 # ##############################
-# Sagemaker Deployment
+# Lambda deployment
 # ##############################
-variable "model_artifact_uri" {
-  description = "S3 URI of the model.tar.gz to serve. Empty disables the endpoint."
+variable "lambda_image_tag" {
+  description = "Tag of the API image in the project ECR repo. Empty until one is pushed, which leaves the function uncreated."
   type        = string
   default     = ""
-}
-
-variable "inference_image" {
-  description = "ECR URI of the serving container."
-  type        = string
-  default     = "341280168497.dkr.ecr.ca-central-1.amazonaws.com/sagemaker-scikit-learn:1.2-1-cpu-py3"
 }

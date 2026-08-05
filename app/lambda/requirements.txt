@@ -1,0 +1,11 @@
+# Installed at image build time, not at runtime - that is the whole point of
+# the container image. Nothing is fetched when a request arrives.
+#
+# scikit-learn is pinned to the version that wrote model.joblib. joblib is
+# pickle based, so a different minor version loads with an
+# InconsistentVersionWarning at best and fails at worst. If the model is
+# retrained, repin this to whatever metrics.json records as sklearn_version.
+scikit-learn==1.4.2
+joblib==1.5.3
+pandas==2.2.3
+numpy==2.1.0

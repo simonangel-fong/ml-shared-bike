@@ -1,2 +1,3 @@
-# Output of the training job to deploy.
-model_artifact_uri = "model_artifact_uri"
+# Tag of the prediction API image in the project ECR repo.
+# Empty leaves the Lambda function uncreated.
+lambda_image_tag = ""

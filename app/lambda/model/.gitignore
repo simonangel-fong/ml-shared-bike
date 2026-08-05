@@ -1,0 +1,6 @@
+# Model artifacts are downloaded from S3, not committed - see docs/05-mlapp.md.
+# They are large, and S3 is the source of truth for which model is deployed.
+*.joblib
+*.skops
+*.tar.gz
+metrics.json
