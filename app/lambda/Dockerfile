@@ -17,6 +17,11 @@ RUN pip install --no-cache-dir -r ${LAMBDA_TASK_ROOT}/requirements.txt
 # every pull for nothing, and metrics.json is a training record.
 COPY model/model.joblib ${LAMBDA_TASK_ROOT}/model/
 
+# Prior-year lookups, ~250KB. Baked in for the same reason as the model: the
+# alternative is a feature store queried per request, for two numbers that
+# change once a year. Regenerate with build_features.py after a retrain.
+COPY features/ ${LAMBDA_TASK_ROOT}/features/
+
 COPY handler.py ${LAMBDA_TASK_ROOT}/
 
 CMD ["handler.lambda_handler"]

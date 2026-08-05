@@ -15,6 +15,10 @@ terraform {
       source  = "hashicorp/random"
       version = "~> 3.0"
     }
+    cloudflare = {
+      source  = "cloudflare/cloudflare"
+      version = "~> 4.0"
+    }
   }
 
   backend "s3" {}
@@ -29,6 +33,21 @@ provider "aws" {
   default_tags {
     tags = local.default_tags
   }
+}
+
+# CloudFront reads viewer certificates from us-east-1 only, whatever region the
+# distribution serves from.
+provider "aws" {
+  alias  = "us_east_1"
+  region = "us-east-1"
+
+  default_tags {
+    tags = local.default_tags
+  }
+}
+
+provider "cloudflare" {
+  api_token = var.cloudflare_api_token
 }
 
 data "aws_caller_identity" "current" {}

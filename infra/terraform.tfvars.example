@@ -1,3 +1,9 @@
-# Tag of the prediction API image in the project ECR repo.
-# Empty leaves the Lambda function uncreated.
-lambda_image_tag = ""
+enable_deployment = true
+lambda_image_tag  = "v1"
+
+domain_name            = "trip-ml.example.net"
+acm_certificate_domain = "*.example.net" # must be ISSUED in us-east-1
+
+# Token needs Zone:DNS:Edit. Prefer TF_VAR_cloudflare_api_token over this file.
+cloudflare_zone_id   = ""
+cloudflare_api_token = ""

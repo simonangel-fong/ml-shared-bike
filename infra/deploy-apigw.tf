@@ -1,41 +1,34 @@
 # deploy-apigw.tf
 
-# HTTP API in front of the prediction Lambda.
-#
-# HTTP API (v2) rather than REST API (v1): roughly a third the cost, native
-# CORS, and none of the v1 features (request validators, usage plans, WAF
-# integration) are wanted here. The route is a single POST.
-#
-# The function URL in deploy-lambda.tf stays for direct testing; this is the
-# path the browser front end will use in phase 4.
+# HTTP API (v2) rather than REST: a third the cost, native CORS, and none of the
+# v1 features are wanted for a single POST route.
 
 locals {
   api_name = "${local.prefix_name}-api-gw"
 }
 
 resource "aws_apigatewayv2_api" "this" {
-  count = local.lambda_enabled ? 1 : 0
+  count = var.enable_deployment ? 1 : 0
 
   name          = local.api_name
   protocol_type = "HTTP"
   description   = "Prediction API for the annual demand model"
 
-  # The front end is served from a different origin (CloudFront in phase 4), so
-  # the browser preflights. Without this the call fails in the browser while
-  # working fine from curl.
+  # The front end is a different origin, so the browser preflights. Without
+  # this the call fails in the browser while working fine from curl.
   cors_configuration {
     allow_origins = ["*"]
-    allow_methods = ["POST", "OPTIONS"]
+    # GET for /stations, POST for /forecast and /predict.
+    allow_methods = ["GET", "POST", "OPTIONS"]
     allow_headers = ["content-type"]
     max_age       = 300
   }
 }
 
-# AWS_PROXY passes the whole request through and expects the function to return
-# {statusCode, headers, body} - which handler.py already does, so no mapping
-# templates are involved.
+# AWS_PROXY expects {statusCode, headers, body}, which handler.py returns - so
+# there are no mapping templates.
 resource "aws_apigatewayv2_integration" "lambda" {
-  count = local.lambda_enabled ? 1 : 0
+  count = var.enable_deployment ? 1 : 0
 
   api_id                 = aws_apigatewayv2_api.this[0].id
   integration_type       = "AWS_PROXY"
@@ -46,18 +39,23 @@ resource "aws_apigatewayv2_integration" "lambda" {
   timeout_milliseconds = 29000
 }
 
-resource "aws_apigatewayv2_route" "predict" {
-  count = local.lambda_enabled ? 1 : 0
+# /forecast takes {station_id, date, hour} and derives the rest; /predict takes
+# all 17 features. Same integration - the handler routes on rawPath.
+resource "aws_apigatewayv2_route" "routes" {
+  for_each = var.enable_deployment ? toset([
+    "POST /forecast",
+    "POST /predict",
+    "GET /stations",
+  ]) : toset([])
 
   api_id    = aws_apigatewayv2_api.this[0].id
-  route_key = "POST /predict"
+  route_key = each.value
   target    = "integrations/${aws_apigatewayv2_integration.lambda[0].id}"
 }
 
-# $default with auto_deploy: no manual deployment step, and the stage adds no
-# path prefix, so the URL stays https://<id>.execute-api.../predict.
+# $default with auto_deploy: no deployment step, and no stage prefix in the path.
 resource "aws_apigatewayv2_stage" "default" {
-  count = local.lambda_enabled ? 1 : 0
+  count = var.enable_deployment ? 1 : 0
 
   api_id      = aws_apigatewayv2_api.this[0].id
   name        = "$default"
@@ -81,11 +79,10 @@ resource "aws_cloudwatch_log_group" "apigw" {
   retention_in_days = 7
 }
 
-# API Gateway is a service principal, not a caller with an IAM role, so it needs
-# its own invoke permission. source_arn scopes it to this API rather than any
-# gateway in the account.
+# A service principal needs its own invoke permission; source_arn scopes it to
+# this api rather than any gateway in the account.
 resource "aws_lambda_permission" "apigw" {
-  count = local.lambda_enabled ? 1 : 0
+  count = var.enable_deployment ? 1 : 0
 
   statement_id  = "AllowExecutionFromAPIGateway"
   action        = "lambda:InvokeFunction"

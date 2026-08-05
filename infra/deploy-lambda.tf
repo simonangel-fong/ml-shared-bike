@@ -1,7 +1,6 @@
 # deploy-lambda.tf
 
 locals {
-  lambda_enabled   = var.lambda_image_tag != ""
   lambda_name      = "${local.prefix_name}-api"
   lambda_image_uri = "${aws_ecr_repository.api.repository_url}:${var.lambda_image_tag}"
 }
@@ -36,7 +35,7 @@ resource "aws_iam_role_policy_attachment" "lambda_logs" {
 # Lambda
 # ##############################
 resource "aws_lambda_function" "api" {
-  count = local.lambda_enabled ? 1 : 0
+  count = var.enable_deployment ? 1 : 0
 
   function_name = local.lambda_name
   role          = aws_iam_role.lambda.arn
@@ -61,7 +60,7 @@ resource "aws_cloudwatch_log_group" "lambda" {
 # Or skip the URL entirely and invoke directly:
 #   aws lambda invoke --function-name <name> --payload file://payload.json out.json
 resource "aws_lambda_function_url" "api" {
-  count = local.lambda_enabled ? 1 : 0
+  count = var.enable_deployment ? 1 : 0
 
   function_name      = aws_lambda_function.api[0].function_name
   authorization_type = "AWS_IAM"

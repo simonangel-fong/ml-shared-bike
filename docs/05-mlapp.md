@@ -9,6 +9,9 @@
   - [Development](#development)
     - [Phase 2: lambda](#phase-2-lambda)
     - [Phase 3: api gateway](#phase-3-api-gateway)
+    - [Phase 4: cloudfront](#phase-4-cloudfront)
+    - [Phase 6: custom domain](#phase-6-custom-domain)
+    - [Gating](#gating)
 
 ---
 
@@ -81,9 +84,9 @@ archival format, since it does not execute arbitrary code on load.
 | 1   | init       | init terraform                                   |
 | 2   | lambda     | container image with the model baked in          |
 | 3   | api gtw    | config api gateway                               |
-| 4   | s3 website | config html, s3 key: `web/`                      |
-| 4   | cloudfront | config cloudfront, forward api and s3            |
-| 5   | cloudflare | config cloudflare dns `trip-ml.arguswatcher.net` |
+| 4   | cloudfront | forward api; s3 origin added with the site       |
+| 5   | s3 website | config html, s3 key: `web/`                      |
+| 6   | cloudflare | config cloudflare dns `trip-ml.arguswatcher.net` |
 
 ---
 
@@ -199,5 +202,170 @@ Verified: 200 single, 200 batch, 400 on missing features, 204 on preflight,
 404 on an unknown route. Cold call ~2.7s, warm ~0.17s.
 
 The route is public and unauthenticated - fine for a demo endpoint serving a
-public-data model, and it is what CloudFront will sit in front of in phase 4.
+public-data model, and it is what CloudFront sits in front of in phase 4.
 Add throttling or an api key here if that changes.
+
+---
+
+### Phase 4: cloudfront
+
+One distribution, api gateway as the only origin. The s3 site gets added as a
+second origin under its own path pattern when the site exists.
+
+```
+POST https://<dist>.cloudfront.net/predict
+```
+
+There is no caching value in fronting a POST-only api. What it buys is TLS
+terminated at the edge, a stable hostname for the phase 6 dns record, and a
+single front door for the api and the site.
+
+Two settings matter, and both fail quietly if wrong:
+
+- **Caching disabled** (AWS's `Managed-CachingDisabled`). CloudFront does not
+  key its cache on the request body, so a cached POST would serve one caller's
+  prediction to another. Verified: two different feature vectors returned
+  different predictions with `X-Cache: Miss from cloudfront`. Note a custom
+  policy with all TTLs at zero is rejected - `EnableAcceptEncodingGzip` is not
+  allowed when caching is disabled - hence the managed one.
+- **Host not forwarded.** The origin request policy whitelists `content-type`,
+  `origin` and `accept`. Forwarding `Host` sends the CloudFront hostname to api
+  gateway, which routes on it and answers 403.
+
+`OPTIONS` is in `allowed_methods` so the browser preflight reaches the gateway;
+CloudFront would otherwise reject it before the gateway ever saw it. CORS
+itself is still answered by api gateway.
+
+```sh
+terraform -chdir=infra output -raw cloudfront_predict_url
+# https://d2kuc4p3xrybk9.cloudfront.net/predict
+
+curl -s -XPOST "https://d2kuc4p3xrybk9.cloudfront.net/predict" -H 'Content-Type: application/json' -d '{"station_id":7000,"season":"summer","hour":17,"quarter":3,"month":7,"weekday":2,"week_of_year":28,"is_weekend":0,"is_holiday":0,"hour_sin":-0.2588,"hour_cos":-0.9659,"weekday_sin":0.7818,"weekday_cos":0.6235,"month_sin":-0.5,"month_cos":-0.866,"py_station_hour_weekday_mean":8.2,"py_station_month_mean":6.1}'
+# {"predictions": [4.9716]}
+```
+
+Verified: 200 single, 200 with a different vector and `X-Cache: Miss`, 204 on
+preflight, 307 http -> https. Warm call ~0.17s.
+
+`PriceClass_100` (NA + Europe) - the audience is Toronto.
+
+---
+
+### Phase 6: custom domain
+
+```
+POST https://trip-ml.arguswatcher.net/predict
+```
+
+Two pieces: an ACM cert on the distribution, and a Cloudflare CNAME to it.
+
+The cert is looked up by domain rather than passed as an arn, through a
+`us_east_1` aliased provider - CloudFront reads viewer certificates from
+us-east-1 only, whatever region it serves from. The existing
+`*.arguswatcher.net` wildcard covers this and any future subdomain.
+
+```hcl
+data "aws_acm_certificate" "this" {
+  provider    = aws.us_east_1
+  domain      = var.acm_certificate_domain
+  statuses    = ["ISSUED"]
+  most_recent = true
+}
+```
+
+The dns record is **not proxied**. Proxying puts Cloudflare in front of
+CloudFront, and Cloudflare's request carries its own SNI, which does not match
+the distribution alias - CloudFront answers 403. It looks like a certificate
+problem and is not one.
+
+The Cloudflare provider validates credentials when it is configured, not when a
+resource uses it, so `cloudflare_api_token` has to be set for any apply once the
+provider is declared. Keep it in the environment rather than tfvars:
+
+```sh
+$env:TF_VAR_cloudflare_api_token = "..."
+```
+
+```sh
+curl -s -XPOST "https://trip-ml.arguswatcher.net/predict" -H 'Content-Type: application/json' -d '{"station_id":7000,"season":"summer","hour":17,"quarter":3,"month":7,"weekday":2,"week_of_year":28,"is_weekend":0,"is_holiday":0,"hour_sin":-0.2588,"hour_cos":-0.9659,"weekday_sin":0.7818,"weekday_cos":0.6235,"month_sin":-0.5,"month_cos":-0.866,"py_station_hour_weekday_mean":8.2,"py_station_month_mean":6.1}'; echo
+# {"predictions": [4.9716]}
+```
+
+Verified: TLS validates, 200 on POST, 204 on preflight, warm ~0.16s.
+
+---
+
+### Feature derivation
+
+The model takes 17 features; a user knows three. The gap is closed in the
+handler, not the browser.
+
+| group    | features                                            | source                  |
+| -------- | --------------------------------------------------- | ----------------------- |
+| user     | `station_id`, date, `hour`                          | the request             |
+| calendar | `season`, `quarter`, `month`, `weekday`, `week_of_year`, `is_weekend`, `is_holiday`, 6 sin/cos | derived in `handler.py` |
+| history  | `py_station_hour_weekday_mean`, `py_station_month_mean` | lookup tables in the image |
+
+The history pair is `mean(trip_count)` of the **prior year**, keyed on
+`(station, hour, weekday)` and `(station, month)`. Verified by recomputing them
+from the training data: corr 1.000000, max abs diff 0.0. So the 2022 split
+generates exactly what a 2023 prediction needs - **this build serves 2023**.
+
+`build_features.py` writes `features/*.json` (~250KB, 12,264 + 803 keys) from
+`ml/data/split/annual/test.parquet`. That curated split, not the raw
+`featured/year=2022`, which holds 76 stations and is missing 14 of the model's
+73.
+
+Deriving in the browser was rejected: it would be a second implementation of
+the feature logic in another language, and a convention mismatch there is
+silent. Two were found here by testing against real rows:
+
+- `weekday` is **Sunday=1..Saturday=7** (Spark), not python's Monday=0
+- `is_holiday` follows the pipeline's list, which omits Family Day in 2019 and
+  the August civic holiday entirely
+
+Both produced plausible, wrong predictions. `test_features.py` rebuilds every
+derived column for 2,000 real rows and compares - run it after any change:
+
+```sh
+docker run --rm --entrypoint bash \
+  -v "$PWD/app/lambda:/app" -v "$PWD/ml/data/split/annual:/d" \
+  <sklearn-image> -c "cd /app && python test_features.py /d/test.parquet"
+# total mismatches: 0
+```
+
+A feature store (DynamoDB/S3) would be the general answer, and is the wrong one
+here: another resource and a per-request round trip, for two numbers that
+change once a year - at which point the image is rebuilt anyway for the
+retrained model.
+
+---
+
+### Routes
+
+```sh
+D=https://trip-ml.arguswatcher.net
+
+curl -s "$D/stations"
+# {"stations": [7000, ...], "target_year": 2023, "history_year": 2022}
+
+curl -s -XPOST "$D/forecast" -H 'Content-Type: application/json' \
+  -d '{"station_id":7000,"date":"2023-07-19","hour":17}'
+# {"predictions": [6.3166]}
+
+curl -s -XPOST "$D/forecast" -H 'Content-Type: application/json' \
+  -d '{"instances":[{"station_id":7000,"date":"2023-07-19","hour":8},{"station_id":7000,"date":"2023-07-19","hour":17}]}'
+# {"predictions": [3.4854, 6.3166]}
+```
+
+`/predict` still takes all 17 features, for testing and for callers that hold
+real vectors. Verified identical: `/forecast` and `/predict` return the same
+6.3166 for the same moment.
+
+---
+
+### Gating
+
+One switch, `enable_deployment`, covers lambda, api gateway, cloudfront and
+dns. Off leaves the ecr repo and iam in place, so an image can be pushed before
+the function that runs it exists - which is the order a first apply needs.

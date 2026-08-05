@@ -26,3 +26,13 @@ output "api_predict_url" {
   description = "public prediction endpoint via api gateway"
   value       = try("${aws_apigatewayv2_api.this[0].api_endpoint}/predict", null)
 }
+
+output "cloudfront_domain" {
+  description = "cloudfront distribution domain; the phase 5 dns target"
+  value       = try(aws_cloudfront_distribution.this[0].domain_name, null)
+}
+
+output "cloudfront_predict_url" {
+  description = "prediction endpoint through cloudfront"
+  value       = try("https://${aws_cloudfront_distribution.this[0].domain_name}/predict", null)
+}
