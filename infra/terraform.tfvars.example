@@ -1,0 +1,2 @@
+# Output of the training job to deploy.
+model_artifact_uri = "model_artifact_uri"

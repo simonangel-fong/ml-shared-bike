@@ -49,11 +49,12 @@
 ## Development
 
 ```sh
-terraform -chdir=infra/mlapp init -backend-config=backend.hcl
-terraform -chdir=infra/mlapp fmt && terraform -chdir=infra/mlapp validate
+terraform -chdir=infra init -backend-config=backend.hcl
+terraform -chdir=infra fmt && terraform -chdir=infra validate
 
-terraform -chdir=infra/mlapp plan
-terraform -chdir=infra/mlapp apply -auto-approve
+terraform -chdir=infra plan
+terraform -chdir=infra apply -auto-approve
+terraform -chdir=infra destroy -auto-approve
 ```
 
 ---
@@ -65,7 +66,7 @@ app/inference/
   inference.py      model_fn/input_fn/predict_fn/output_fn - the stock handler
                     cannot load model.skops
   requirements.txt  sklearn 1.9.0 etc, pinned to match mlops/requirements.txt
-infra/mlapp/
+infra/
   sagemaker-iam.tf       serving role - read trains/ and serve/, decrypt the key
   sagemaker-code.tf      tars app/inference/ -> s3://<bucket>/serve/sourcedir.tar.gz
   sagemaker-endpoint.tf  model -> endpoint config (serverless) -> endpoint
