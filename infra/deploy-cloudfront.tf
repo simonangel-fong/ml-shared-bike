@@ -7,12 +7,11 @@ locals {
 # ##############################
 # Certificate
 # ##############################
-# us-east-1 provider: CloudFront accepts viewer certificates from there only.
 data "aws_acm_certificate" "this" {
-  count    = var.enable_deployment ? 1 : 0
-  provider = aws.us_east_1
+  count = var.enable_deployment ? 1 : 0
 
   domain      = var.acm_certificate_domain
+  provider    = aws.us_east_1 # provider us-east-1 
   statuses    = ["ISSUED"]
   most_recent = true
 }
@@ -20,16 +19,17 @@ data "aws_acm_certificate" "this" {
 # ##############################
 # Policies
 # ##############################
-# Predictions are keyed on the request body, which CloudFront does not include
-# in its cache key - caching would serve one caller's result to another.
-# The managed policy rather than an equivalent of our own: a custom policy with
-# zero TTLs is rejected outright.
+# turns off caching
 data "aws_cloudfront_cache_policy" "no_cache" {
   name = "Managed-CachingDisabled"
 }
 
-# Host is deliberately absent: api gateway routes on it, and forwarding the
-# CloudFront hostname gives a 403.
+# keeping the cache key as light as possible: no Headers,Cookies,Query Strings
+data "aws_cloudfront_cache_policy" "optimized" {
+  name = "Managed-CachingOptimized"
+}
+
+# forward
 resource "aws_cloudfront_origin_request_policy" "api" {
   name    = "${local.prefix_name}-api-origin"
   comment = "Forward everything except Host to the api gateway"
@@ -40,10 +40,6 @@ resource "aws_cloudfront_origin_request_policy" "api" {
   headers_config {
     header_behavior = "whitelist"
     headers {
-      # The two access-control-request-* headers are what make a preflight a
-      # preflight. Without them api gateway sees a plain OPTIONS, answers a
-      # bare 204 with no CORS headers, and every browser POST fails as
-      # "Failed to fetch" while curl works.
       items = [
         "content-type",
         "origin",
@@ -72,6 +68,10 @@ resource "aws_cloudfront_distribution" "this" {
   # NA + Europe; the audience is Toronto.
   price_class = "PriceClass_100"
 
+  # The site is what a visitor gets by default; the api is a path under it.
+  default_root_object = "index.html"
+
+  # origin: api
   origin {
     origin_id   = "apigw"
     domain_name = local.apigw_domain
@@ -84,11 +84,32 @@ resource "aws_cloudfront_distribution" "this" {
     }
   }
 
+  # origin: s3
+  origin {
+    origin_id                = "s3web"
+    domain_name              = aws_s3_bucket.ml.bucket_regional_domain_name
+    origin_path              = "/web"
+    origin_access_control_id = aws_cloudfront_origin_access_control.s3[0].id
+  }
+
+  # /: the static site. Cached.
   default_cache_behavior {
+    target_origin_id = "s3web"
+
+    allowed_methods = ["GET", "HEAD", "OPTIONS"]
+    cached_methods  = ["GET", "HEAD"]
+
+    viewer_protocol_policy = "redirect-to-https"
+    compress               = true
+
+    cache_policy_id = data.aws_cloudfront_cache_policy.optimized.id
+  }
+
+  # /api/*: api gateway, uncached.
+  ordered_cache_behavior {
+    path_pattern     = "/api/*"
     target_origin_id = "apigw"
 
-    # OPTIONS so the browser preflight reaches the gateway rather than being
-    # rejected at the edge.
     allowed_methods = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
     cached_methods  = ["GET", "HEAD"]
 

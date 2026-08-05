@@ -11,6 +11,9 @@
     - [Phase 3: api gateway](#phase-3-api-gateway)
     - [Phase 4: cloudfront](#phase-4-cloudfront)
     - [Phase 6: custom domain](#phase-6-custom-domain)
+    - [Feature derivation](#feature-derivation)
+    - [Routes](#routes)
+    - [Phase 5: web site](#phase-5-web-site)
     - [Gating](#gating)
 
 ---
@@ -79,14 +82,16 @@ archival format, since it does not execute arbitrary code on load.
 
 ## Phases
 
-| #   | Phase      | Description                                      |
-| --- | ---------- | ------------------------------------------------ |
-| 1   | init       | init terraform                                   |
-| 2   | lambda     | container image with the model baked in          |
-| 3   | api gtw    | config api gateway                               |
-| 4   | cloudfront | forward api; s3 origin added with the site       |
-| 5   | s3 website | config html, s3 key: `web/`                      |
-| 6   | cloudflare | config cloudflare dns `trip-ml.arguswatcher.net` |
+| #   | Phase            | Description                                                                     |
+| --- | ---------------- | ------------------------------------------------------------------------------- |
+| 1   | init             | init terraform                                                                  |
+| 2   | lambda           | container image with the model baked in                                         |
+| 3   | api gtw          | config api gateway                                                              |
+| 4   | cloudfront       | forward api; s3 origin added with the site                                      |
+| 5   | s3 website       | config html, s3 key: `web/`                                                     |
+| 6   | cloudflare       | config cloudflare dns `trip-ml.arguswatcher.net`                                |
+| 7   | monitoring       | enable cloudwatch to visualize metrics                                          |
+| 8   | performance test | k6 test ml api with 2023, log response, visualize comparing ml with actual data |
 
 ---
 
@@ -300,11 +305,11 @@ Verified: TLS validates, 200 on POST, 204 on preflight, warm ~0.16s.
 The model takes 17 features; a user knows three. The gap is closed in the
 handler, not the browser.
 
-| group    | features                                            | source                  |
-| -------- | --------------------------------------------------- | ----------------------- |
-| user     | `station_id`, date, `hour`                          | the request             |
-| calendar | `season`, `quarter`, `month`, `weekday`, `week_of_year`, `is_weekend`, `is_holiday`, 6 sin/cos | derived in `handler.py` |
-| history  | `py_station_hour_weekday_mean`, `py_station_month_mean` | lookup tables in the image |
+| group    | features                                                                                       | source                     |
+| -------- | ---------------------------------------------------------------------------------------------- | -------------------------- |
+| user     | `station_id`, date, `hour`                                                                     | the request                |
+| calendar | `season`, `quarter`, `month`, `weekday`, `week_of_year`, `is_weekend`, `is_holiday`, 6 sin/cos | derived in `handler.py`    |
+| history  | `py_station_hour_weekday_mean`, `py_station_month_mean`                                        | lookup tables in the image |
 
 The history pair is `mean(trip_count)` of the **prior year**, keyed on
 `(station, hour, weekday)` and `(station, month)`. Verified by recomputing them
@@ -313,8 +318,7 @@ generates exactly what a 2023 prediction needs - **this build serves 2023**.
 
 `build_features.py` writes `features/*.json` (~250KB, 12,264 + 803 keys) from
 `ml/data/split/annual/test.parquet`. That curated split, not the raw
-`featured/year=2022`, which holds 76 stations and is missing 14 of the model's
-73.
+`featured/year=2022`, which holds 76 stations and is missing 14 of the model's 73.
 
 Deriving in the browser was rejected: it would be a second implementation of
 the feature logic in another language, and a convention mismatch there is
@@ -361,6 +365,51 @@ curl -s -XPOST "$D/forecast" -H 'Content-Type: application/json' \
 `/predict` still takes all 17 features, for testing and for callers that hold
 real vectors. Verified identical: `/forecast` and `/predict` return the same
 6.3166 for the same moment.
+
+---
+
+### Phase 5: web site
+
+```
+https://trip-ml.arguswatcher.net/          index.html from s3://<bucket>/web/
+https://trip-ml.arguswatcher.net/api/*     api gateway
+```
+
+One distribution, two origins. The site is the default behaviour; `/api/*` is
+an ordered behaviour pointing at the gateway. Same origin, so the page needs no
+CORS at all - the browser never makes a cross-origin request.
+
+The bucket stays private. CloudFront reads it through Origin Access Control,
+scoped by `origin_path = "/web"` and a bucket policy limited to `web/*` and
+this distribution - the same bucket holds training data and model artifacts,
+and none of it should become reachable because a website was added.
+
+Two things that are easy to miss and both return 403 rather than saying what is
+wrong:
+
+- the bucket is SSE-KMS, so the key policy needs `kms:Decrypt` for
+  `cloudfront.amazonaws.com` as well as the bucket policy grant
+- `aws_s3_object` cannot take both `etag` and `kms_key_id`; use `source_hash`
+
+An HTTP API cannot rewrite paths, so the gateway answers both `/forecast` and
+`/api/forecast` rather than the edge stripping the prefix.
+
+Redeploying the page is `terraform apply`, but CloudFront caches it - invalidate
+to see the change immediately:
+
+```sh
+aws cloudfront create-invalidation \
+  --distribution-id $(terraform -chdir=infra output -raw cloudfront_distribution_id) \
+  --paths '/*'
+```
+
+Local development, against the deployed api:
+
+```sh
+python -m http.server 8000 --directory app/web
+# then in the devtools console, before clicking:
+#   window.API_BASE = "https://trip-ml.arguswatcher.net"
+```
 
 ---
 

@@ -73,17 +73,29 @@ data "aws_iam_policy_document" "kms" {
     }
   }
 
-  #   # Lambda
-  #   statement {
-  #     sid       = "AllowApiLambdaRole"
-  #     effect    = "Allow"
-  #     actions   = ["kms:Decrypt", "kms:DescribeKey"]
-  #     resources = ["*"]
+  # CloudFront reads the site objects, which are SSE-KMS encrypted like
+  # everything else in the bucket. Without this the bucket policy grants
+  # GetObject and S3 still answers 403, because the decrypt is refused.
+  dynamic "statement" {
+    for_each = var.enable_deployment ? [1] : []
 
-  #     principals {
-  #       type        = "AWS"
-  #       identifiers = [aws_iam_role.api_lambda[0].arn]
-  #     }
-  #   }
+    content {
+      sid       = "AllowCloudFrontDecryptWeb"
+      effect    = "Allow"
+      actions   = ["kms:Decrypt"]
+      resources = ["*"]
+
+      principals {
+        type        = "Service"
+        identifiers = ["cloudfront.amazonaws.com"]
+      }
+
+      condition {
+        test     = "StringEquals"
+        variable = "AWS:SourceArn"
+        values   = [aws_cloudfront_distribution.this[0].arn]
+      }
+    }
+  }
 }
 

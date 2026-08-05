@@ -1,167 +1,251 @@
 <!doctype html>
 <html lang="en">
+
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Toronto Bike Share - Demand Forecast</title>
-<style>
-  :root {
-    --fg: #1a1a1a;
-    --muted: #6b7280;
-    --line: #e5e7eb;
-    --accent: #2563eb;
-    --bg: #fff;
-  }
-  @media (prefers-color-scheme: dark) {
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Toronto Bike Share - Demand Forecast</title>
+  <style>
     :root {
-      --fg: #e8e8e8; --muted: #9ca3af; --line: #374151;
-      --accent: #60a5fa; --bg: #111827;
+      --fg: #1a1a1a;
+      --muted: #6b7280;
+      --line: #e5e7eb;
+      --accent: #2563eb;
+      --bg: #fff;
     }
-  }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0; padding: 2rem 1rem;
-    font: 16px/1.5 system-ui, -apple-system, sans-serif;
-    color: var(--fg); background: var(--bg);
-  }
-  main { max-width: 32rem; margin: 0 auto; }
-  h1 { font-size: 1.4rem; margin: 0 0 .25rem; }
-  .sub { color: var(--muted); font-size: .875rem; margin: 0 0 1.75rem; }
-  .row { display: flex; gap: .75rem; flex-wrap: wrap; margin-bottom: 1rem; }
-  .field { flex: 1 1 8rem; }
-  label { display: block; font-size: .8rem; color: var(--muted); margin-bottom: .25rem; }
-  select, input {
-    width: 100%; padding: .5rem; font: inherit;
-    color: var(--fg); background: var(--bg);
-    border: 1px solid var(--line); border-radius: .375rem;
-  }
-  button {
-    width: 100%; padding: .625rem; font: inherit; font-weight: 600;
-    color: #fff; background: var(--accent);
-    border: 0; border-radius: .375rem; cursor: pointer;
-  }
-  button:disabled { opacity: .5; cursor: default; }
-  #out { margin-top: 1.5rem; text-align: center; min-height: 5rem; }
-  .value { font-size: 3rem; font-weight: 700; line-height: 1.1; }
-  .unit { color: var(--muted); font-size: .875rem; }
-  .error { color: #dc2626; font-size: .875rem; }
-  @media (prefers-color-scheme: dark) { .error { color: #f87171; } }
-  footer {
-    margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--line);
-    color: var(--muted); font-size: .75rem;
-  }
-</style>
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --fg: #e8e8e8;
+        --muted: #9ca3af;
+        --line: #374151;
+        --accent: #60a5fa;
+        --bg: #111827;
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 2rem 1rem;
+      font: 16px/1.5 system-ui, -apple-system, sans-serif;
+      color: var(--fg);
+      background: var(--bg);
+    }
+
+    main {
+      max-width: 32rem;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 1.4rem;
+      margin: 0 0 .25rem;
+    }
+
+    .sub {
+      color: var(--muted);
+      font-size: .875rem;
+      margin: 0 0 1.75rem;
+    }
+
+    .row {
+      display: flex;
+      gap: .75rem;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+
+    .field {
+      flex: 1 1 8rem;
+    }
+
+    label {
+      display: block;
+      font-size: .8rem;
+      color: var(--muted);
+      margin-bottom: .25rem;
+    }
+
+    select,
+    input {
+      width: 100%;
+      padding: .5rem;
+      font: inherit;
+      color: var(--fg);
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: .375rem;
+    }
+
+    button {
+      width: 100%;
+      padding: .625rem;
+      font: inherit;
+      font-weight: 600;
+      color: #fff;
+      background: var(--accent);
+      border: 0;
+      border-radius: .375rem;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      opacity: .5;
+      cursor: default;
+    }
+
+    #out {
+      margin-top: 1.5rem;
+      text-align: center;
+      min-height: 5rem;
+    }
+
+    .value {
+      font-size: 3rem;
+      font-weight: 700;
+      line-height: 1.1;
+    }
+
+    .unit {
+      color: var(--muted);
+      font-size: .875rem;
+    }
+
+    .error {
+      color: #dc2626;
+      font-size: .875rem;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .error {
+        color: #f87171;
+      }
+    }
+
+    footer {
+      margin-top: 2rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: .75rem;
+    }
+  </style>
 </head>
+
 <body>
-<main>
-  <h1>Bike Share Demand Forecast</h1>
-  <p class="sub">Expected trips departing a station in a given hour.</p>
+  <main>
+    <h1>Bike Share Demand Forecast</h1>
+    <p class="sub">Expected trips departing a station in a given hour.</p>
 
-  <div class="row">
-    <div class="field">
-      <label for="station">Station</label>
-      <select id="station"><option>loading…</option></select>
+    <div class="row">
+      <div class="field">
+        <label for="station">Station</label>
+        <select id="station">
+          <option>loading…</option>
+        </select>
+      </div>
     </div>
-  </div>
 
-  <div class="row">
-    <div class="field">
-      <label for="date">Date</label>
-      <input type="date" id="date">
+    <div class="row">
+      <div class="field">
+        <label for="date">Date</label>
+        <input type="date" id="date">
+      </div>
+      <div class="field">
+        <label for="hour">Hour</label>
+        <select id="hour"></select>
+      </div>
     </div>
-    <div class="field">
-      <label for="hour">Hour</label>
-      <select id="hour"></select>
-    </div>
-  </div>
 
-  <button id="go" disabled>Forecast</button>
+    <button id="go" disabled>Forecast</button>
 
-  <div id="out"></div>
+    <div id="out"></div>
 
-  <footer id="note"></footer>
-</main>
+    <footer id="note"></footer>
+  </main>
 
-<script>
-// Same origin in production: CloudFront serves this page and proxies /forecast
-// to the api. For local testing, set window.API_BASE in a script tag above this
-// one, or in the devtools console before clicking.
-const API = window.API_BASE || "";
+  <script>
+    const API = (window.API_BASE || "") + "/api";
 
-const $station = document.getElementById("station");
-const $date = document.getElementById("date");
-const $hour = document.getElementById("hour");
-const $go = document.getElementById("go");
-const $out = document.getElementById("out");
-const $note = document.getElementById("note");
+    const $station = document.getElementById("station");
+    const $date = document.getElementById("date");
+    const $hour = document.getElementById("hour");
+    const $go = document.getElementById("go");
+    const $out = document.getElementById("out");
+    const $note = document.getElementById("note");
 
-for (let h = 0; h < 24; h++) {
-  const label = h === 0 ? "12 AM" : h < 12 ? `${h} AM` : h === 12 ? "12 PM" : `${h - 12} PM`;
-  $hour.add(new Option(`${String(h).padStart(2, "0")}:00 · ${label}`, h));
-}
-$hour.value = 17;
+    for (let h = 0; h < 24; h++) {
+      const label = h === 0 ? "12 AM" : h < 12 ? `${h} AM` : h === 12 ? "12 PM" : `${h - 12} PM`;
+      $hour.add(new Option(`${String(h).padStart(2, "0")}:00 · ${label}`, h));
+    }
+    $hour.value = 17;
 
-function show(html) { $out.innerHTML = html; }
+    function show(html) { $out.innerHTML = html; }
 
-// The model is trained on prior-year history, so it only serves the year the
-// image was built for. Clamping the date input avoids a 400 the user cannot
-// otherwise anticipate.
-async function init() {
-  try {
-    const r = await fetch(`${API}/stations`);
-    if (!r.ok) throw new Error(`stations: HTTP ${r.status}`);
-    const { stations, target_year, history_year } = await r.json();
+    // The model is trained on prior-year history, so it only serves the year the
+    // image was built for. Clamping the date input avoids a 400 the user cannot
+    // otherwise anticipate.
+    async function init() {
+      try {
+        const r = await fetch(`${API}/stations`);
+        if (!r.ok) throw new Error(`stations: HTTP ${r.status}`);
+        const { stations, target_year, history_year } = await r.json();
 
-    $station.innerHTML = "";
-    for (const s of stations) $station.add(new Option(s.name, s.id));
+        $station.innerHTML = "";
+        for (const s of stations) $station.add(new Option(s.name, s.id));
 
-    $date.min = `${target_year}-01-01`;
-    $date.max = `${target_year}-12-31`;
-    $date.value = `${target_year}-07-19`;
+        $date.min = `${target_year}-01-01`;
+        $date.max = `${target_year}-12-31`;
+        $date.value = `${target_year}-07-19`;
 
-    $note.textContent =
-      `${stations.length} stations · forecasts for ${target_year}, ` +
-      `based on ${history_year} demand patterns.`;
-    $go.disabled = false;
-  } catch (err) {
-    $station.innerHTML = "<option>unavailable</option>";
-    show(`<p class="error">Could not load stations. ${err.message}</p>`);
-  }
-}
+        $note.textContent =
+          `${stations.length} stations · forecasts for ${target_year}, ` +
+          `based on ${history_year} demand patterns.`;
+        $go.disabled = false;
+      } catch (err) {
+        $station.innerHTML = "<option>unavailable</option>";
+        show(`<p class="error">Could not load stations. ${err.message}</p>`);
+      }
+    }
 
-async function forecast() {
-  $go.disabled = true;
-  show('<p class="unit">…</p>');
+    async function forecast() {
+      $go.disabled = true;
+      show('<p class="unit">…</p>');
 
-  try {
-    const r = await fetch(`${API}/forecast`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        station_id: Number($station.value),
-        date: $date.value,
-        hour: Number($hour.value),
-      }),
-    });
+      try {
+        const r = await fetch(`${API}/forecast`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            station_id: Number($station.value),
+            date: $date.value,
+            hour: Number($hour.value),
+          }),
+        });
 
-    const data = await r.json();
-    // The api reports its own validation errors in `error`; surface those
-    // rather than a generic failure, since they say what to change.
-    if (!r.ok) throw new Error(data.error || `HTTP ${r.status}`);
+        const data = await r.json();
+        // The api reports its own validation errors in `error`; surface those
+        // rather than a generic failure, since they say what to change.
+        if (!r.ok) throw new Error(data.error || `HTTP ${r.status}`);
 
-    const n = data.predictions[0];
-    const name = $station.options[$station.selectedIndex].text;
-    show(`<div class="value">${n.toFixed(1)}</div>
+        const n = data.predictions[0];
+        const name = $station.options[$station.selectedIndex].text;
+        show(`<div class="value">${n.toFixed(1)}</div>
           <div class="unit">trips expected · ${name}</div>`);
-  } catch (err) {
-    show(`<p class="error">${err.message}</p>`);
-  } finally {
-    $go.disabled = false;
-  }
-}
+      } catch (err) {
+        show(`<p class="error">${err.message}</p>`);
+      } finally {
+        $go.disabled = false;
+      }
+    }
 
-$go.addEventListener("click", forecast);
-init();
-</script>
+    $go.addEventListener("click", forecast);
+    init();
+  </script>
 </body>
+
 </html>

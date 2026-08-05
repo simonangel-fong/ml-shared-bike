@@ -93,6 +93,32 @@ data "aws_iam_policy_document" "ml_bucket" {
       values   = ["false"]
     }
   }
+
+  # CloudFront reads the site through Origin Access Control, so the bucket
+  # stays private. Scoped to web/* and to this distribution: the same bucket
+  # holds training data and model artifacts, which must not become reachable
+  # over the internet just because a website was added to it.
+  dynamic "statement" {
+    for_each = var.enable_deployment ? [1] : []
+
+    content {
+      sid       = "AllowCloudFrontReadWeb"
+      effect    = "Allow"
+      actions   = ["s3:GetObject"]
+      resources = ["${aws_s3_bucket.ml.arn}/web/*"]
+
+      principals {
+        type        = "Service"
+        identifiers = ["cloudfront.amazonaws.com"]
+      }
+
+      condition {
+        test     = "StringEquals"
+        variable = "AWS:SourceArn"
+        values   = [aws_cloudfront_distribution.this[0].arn]
+      }
+    }
+  }
 }
 
 resource "aws_s3_bucket_policy" "ml" {

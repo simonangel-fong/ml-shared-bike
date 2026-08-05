@@ -4,7 +4,7 @@
 # ECR
 # ##############################
 resource "aws_ecr_repository" "api" {
-  name                 = "${local.prefix_name}-api"
+  name                 = local.app_name
   image_tag_mutability = "MUTABLE"
   force_delete         = true
 
