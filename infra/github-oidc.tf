@@ -1,27 +1,6 @@
 # github-oidc.tf
 
-locals {
-  github_branch = "master"
-  # IDs are stable across renames, which is the point:
-  #   gh api repos/simonangel-fong/ml-shared-bike --jq '{id, owner_id: .owner.id}'
-  github_owner    = "simonangel-fong"
-  github_owner_id = "64545430"
-  github_repo     = "ml-shared-bike"
-  github_repo_id  = "1314382375"
 
-  github_repo_id_prefix = join("", [
-    "repo:${local.github_owner}@${local.github_owner_id}",
-    "/${local.github_repo}@${local.github_repo_id}",
-  ])
-
-  # Pushes to the default branch, and pull requests targeting it. The pull
-  # request subject is a different string - without it, plan-on-PR cannot
-  # assume the role at all.
-  github_subs = [
-    "${local.github_repo_id_prefix}:ref:refs/heads/${local.github_branch}",
-    "${local.github_repo_id_prefix}:pull_request",
-  ]
-}
 
 # ##############################
 # OIDC provider

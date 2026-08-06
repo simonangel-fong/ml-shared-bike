@@ -31,9 +31,6 @@ REGION = "ca-central-1"
 SPLIT_PREFIX = "data/split/"
 OUTPUT_PREFIX = "trains/"
 
-# Pinned because image_uris.retrieve() rejects this tag - it is in ECR but not
-# in the registry bundled with sagemaker 2.x. py312 is required, not preferred:
-# the default 1.4-2 image runs Python 3.10, and scikit-learn 1.9.0 needs >=3.11.
 IMAGE_URI = (
     "341280168497.dkr.ecr.ca-central-1.amazonaws.com/"
     "sagemaker-scikit-learn:1.4-2-py312-cpu-py3"
@@ -83,8 +80,6 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     args = parse_args()
 
-    # Streamed container logs crash the waiter on a cp1252 console mid-job. The
-    # job is unaffected, but the traceback reads like a training failure.
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 

@@ -1,16 +1,16 @@
-# Toronto Shared Bike: Machine learning
+# Toronto Shared Bike MLOps Project
 
-A machine learning project that explores key features of shared bike dataset.
+A project demonstrates an end-to-end `MLOps` workflow by training, deploying, and serving a bike-demand forecasting model.
 
-- [Toronto Shared Bike: Machine learning](#toronto-shared-bike-machine-learning)
+- [Toronto Shared Bike MLOps Project](#toronto-shared-bike-mlops-project)
   - [Business challenge](#business-challenge)
   - [Machine learning](#machine-learning)
     - [Problem Definition](#problem-definition)
     - [Data Collection \& Preparation](#data-collection--preparation)
     - [Model Development \& Training \& Validation](#model-development--training--validation)
-    - [Training Pipeline](#training-pipeline)
-  - [Application](#application)
-    - [Model Deployment](#model-deployment)
+    - [Training Pipeline with `Amazon Sagemaker`](#training-pipeline-with-amazon-sagemaker)
+  - [Application Deployment](#application-deployment)
+    - [Architecture](#architecture)
     - [Devops Pipeline](#devops-pipeline)
     - [Monitoring](#monitoring)
   - [Takeway \& Roadmap](#takeway--roadmap)
@@ -20,36 +20,68 @@ A machine learning project that explores key features of shared bike dataset.
 
 ## Business challenge
 
+Machine learning turns historical data into insights for faster, data-driven decisions.
+
+> However, **integrating machine learing models reliably into business applications** remains a significant challenge.
+
+This project demonstrates an end-to-end `MLOps` workflow by training, deploying, and serving a bike-demand forecasting model.
+
 ---
 
 ## Machine learning
 
 ### Problem Definition
 
+**Problem**:
+
+> Predict hourly bike rentals at the 73 busiest stations for annual members, whose demand is driven primarily by predictable weekday commuting patterns.
+
+**Business impact**:
+
+- **Operations team**: Anticipate demand and rebalance bikes before high-demand stations run out.
+- **Annual members**: Improve bike availability and service reliability during regular commutes.
+
 ---
 
 ### Data Collection & Preparation
 
-Data warehouse, etl, export
+This project builds on the [Toronto Shared Bike Data Engineering project](https://trip.arguswatcher.net/), which provides the data warehouse and ETL pipeline.
 
-### Model Development & Training & Validation
-
-setup Jupyter Notebook and MLflow locally
-feature engineering && model selection
+The trip data is exported from the warehouse and prepared for feature engineering and model training.
 
 ---
 
-### Training Pipeline
+### Model Development & Training & Validation
 
-Diagram
+Setup `Jupyter Notebook` to develop model locally
+
+- `Jupyter Notebook`: Local tarining
+
+  ![ml_notebook01](./docs/img/ml_notebook01.png)
+
+Train, evaluate, and track model training by `MLflow`
+
+- `MLflow`: Runs
+
+  ![ml_mlflow_hyperparameter02](./docs/img/ml_mlflow_hyperparameter02.png)
+
+- MLflow: Hyperparameter Training
+
+  ![ml_mlflow_hyperparameter01](./docs/img/ml_mlflow_hyperparameter01.png)
+
+---
+
+### Training Pipeline with `Amazon Sagemaker`
+
+`Amazone Sagemaker`
 
 GitHub Action + Sagemaker
 
 ---
 
-## Application
+## Application Deployment
 
-### Model Deployment
+### Architecture
 
 diagram
 

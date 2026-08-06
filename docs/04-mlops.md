@@ -87,6 +87,9 @@ trains/<job-name>/
 ### Data to S3
 
 ```sh
+terraform -chdir=infra output -raw s3_bucket_name
+# toronto-shared-bike-ml-ud3m7h
+
 # upload split data to s3
 aws s3 cp ml/data/split/annual/ s3://toronto-shared-bike-ml-ud3m7h/data/split/ --recursive --exclude "*" --include "*.parquet" --include "split.json"
 # upload: ml\data\split\annual\split.json to s3://toronto-shared-bike-ml-ud3m7h/data/split/split.json

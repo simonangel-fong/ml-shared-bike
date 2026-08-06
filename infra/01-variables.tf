@@ -14,7 +14,7 @@ variable "project" {
 variable "enable_deployment" {
   description = "Create the serving stack. Requires an image already pushed at lambda_image_tag."
   type        = bool
-  default     = true
+  default     = false
 }
 
 # ##############################

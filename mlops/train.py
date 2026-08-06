@@ -146,15 +146,6 @@ def write_output(
     """
     model_dir.mkdir(parents=True, exist_ok=True)
 
-    # skops is the archival format: it does not execute arbitrary code on load,
-    # so it is what to keep for a model that outlives this container.
-    sio.dump(model, model_dir / "model.skops")
-
-    # joblib is what the endpoint loads. The serving image ships joblib but not
-    # skops, and adding skops there means a requirements.txt that the endpoint
-    # pip-installs as an unprivileged user - the install lands off sys.path and
-    # the container fails with a misleading "No module named 'inference'".
-    # Writing both keeps serving dependency-free at the cost of one extra file.
     joblib.dump(model, model_dir / "model.joblib")
 
     (model_dir / "metrics.json").write_text(
