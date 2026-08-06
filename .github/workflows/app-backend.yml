@@ -52,7 +52,11 @@ jobs:
       # convention mismatch, so it gates the build rather than following it.
       - name: Feature parity
         run: |
-          pip install --quiet pandas pyarrow joblib scikit-learn numpy
+          # The image's own pins, not a loose install: sklearn is pinned to the
+          # version that wrote model.joblib, and an unpinned one here would test
+          # against a different library than production runs. pyarrow is extra -
+          # it reads the parquet split, and only the test needs it.
+          pip install --quiet -r app/lambda/requirements.txt pyarrow
           aws s3 cp "$SPLIT_URI" /tmp/test.parquet
           cd app/lambda && python test_features.py /tmp/test.parquet
 

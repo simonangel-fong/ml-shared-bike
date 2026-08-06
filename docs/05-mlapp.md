@@ -224,5 +224,8 @@ gh workflow run app-infra.yml
 # deploy frontend
 gh workflow run app-frontend.yml
 
+# deploy backend
+gh workflow run app-backend.yml
+
 gh run watch
 ```

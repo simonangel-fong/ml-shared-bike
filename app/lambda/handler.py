@@ -67,12 +67,32 @@ HOLIDAYS = {
     "2023-07-01", "2023-09-04", "2023-10-09", "2023-12-25", "2023-12-26",
 }
 
-MODEL = joblib.load(MODEL_PATH)
 PY_HOUR_WEEKDAY = json.loads((FEATURES_DIR / "py_hour_weekday.json").read_text())
 PY_MONTH = json.loads((FEATURES_DIR / "py_month.json").read_text())
 META = json.loads((FEATURES_DIR / "meta.json").read_text())
 
 STATIONS = set(META["stations"])
+
+_MODEL = None
+
+
+def get_model():
+    """Load the model once per container, on first use rather than on import.
+
+    Lazy for two reasons. It keeps importing this module free of the model,
+    which lets the feature parity test run anywhere - joblib is pickle based,
+    so loading an artifact written by scikit-learn 1.4.2 under a newer sklearn
+    raises on a compiled class it cannot find, and CI has no reason to install
+    the exact training version just to check calendar arithmetic.
+
+    It also moves a corrupt or missing artifact from an import error, which
+    Lambda reports as an opaque init failure, to the first request, which
+    reports what actually went wrong.
+    """
+    global _MODEL
+    if _MODEL is None:
+        _MODEL = joblib.load(MODEL_PATH)
+    return _MODEL
 
 
 def _season(month: int) -> str:
@@ -220,7 +240,7 @@ def lambda_handler(event, context):  # noqa: ARG001 - context is unused
         if missing:
             return _response(400, {"error": f"missing features: {missing}"})
 
-        preds = np.clip(MODEL.predict(frame[FEATURES]), 0, None)
+        preds = np.clip(get_model().predict(frame[FEATURES]), 0, None)
 
         return _response(
             200, {"predictions": [round(float(v), 4) for v in preds]}
