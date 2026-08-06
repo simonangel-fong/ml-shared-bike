@@ -8,7 +8,6 @@
   - [Files](#files)
   - [Development](#development)
     - [Data to S3](#data-to-s3)
-    - [Local Run](#local-run)
     - [Training job](#training-job)
     - [CI/CD](#cicd)
 
@@ -54,7 +53,7 @@ mlops/
   requirements.txt         installed in the container - pins sklearn 1.9.0
   requirements-dev.txt     laptop/runner only - sagemaker SDK, pinned <3
 .github/workflows/
-  train.yml
+  mlops-train.yml
 infra/
   github-oidc.tf           CI role and trust policy
 ```
@@ -107,28 +106,6 @@ aws s3 ls s3://toronto-shared-bike-ml-ud3m7h/data/split/
 
 ---
 
-### Local Run
-
-```sh
-python mlops/train.py --quantile 0.8
-# train 1,280,712 | val   639,480 | test   586,920
-# 17 features -> trip_count
-# fitted
-#
-# test 2022
-#   MAE                1.0452
-#   MAE_peak           1.5513
-#   MAE_busy           6.9058
-#   under_rate_busy    1.0000
-#   shortfall_busy     0.5631
-#   pinball            0.3248
-#   over_supply        0.8523
-#
-# wrote model.skops and metrics.json to mlops/output
-```
-
----
-
 ### Training job
 
 Install the submit-side deps once; the container installs
@@ -173,6 +150,8 @@ python mlops/submit.py --bucket toronto-shared-bike-ml-ud3m7h   --role arn:aws:i
 # 2026-08-04 20:32:41,356 sagemaker-training-toolkit INFO     Reporting training SUCCESS
 ```
 
+![sagemaker_training_job01](./img/sagemaker_training_job01.png)
+
 - confirm
 
 ```sh
@@ -183,37 +162,17 @@ tar -xzf model.tar.gz && cat metrics.json
 # "MAE": 1.0451602991462254 ...
 ```
 
-The job reproduces the local and notebook metrics to four decimals.
-
-> **Why the `py312` image.** The default `1.4-2` image runs Python 3.10, and
-> scikit-learn 1.9.0 - the version behind the reference metrics - requires
->
-> > =3.11. Both images ship sklearn 1.4.2; `mlops/requirements.txt` upgrades it
-> > in place, which only resolves on 3.12. The image URI is pinned in
-> > `submit.py` because the SDK's bundled registry does not list that tag.
-
-> Pip prints `sagemaker-sklearn-container 2.0 requires numpy==2.1.0 ...`
-> conflicts during the upgrade. Those pins belong to the container's serving
-> stack, which training does not use - the job succeeds. They would matter if
-> this image were used for inference.
-
 ---
 
 ### CI/CD
 
-`.github/workflows/train.yml` submits the same job on a push to `mlops/` on
-`master`, or on demand. No AWS keys are stored - the workflow exchanges a
-GitHub OIDC token for `github_actions_role_arn`, whose trust policy accepts
-only this repo on this branch.
+GitHub Actions Variables
 
-One-time setup: three repo variables under **Settings → Secrets and variables →
-Actions → Variables**. None are secret - they are ARNs and a bucket name.
-
-| Variable             | From                                  |
-| -------------------- | ------------------------------------- |
-| `AWS_ROLE_ARN`       | `github_actions_role_arn` output      |
-| `ML_BUCKET`          | `s3_bucket_name` output               |
-| `SAGEMAKER_ROLE_ARN` | `sagemaker_execution_role_arn` output |
+| Variable             | From                                                                |
+| -------------------- | ------------------------------------------------------------------- |
+| `AWS_OIDC_ROLE_ARN`  | `terraform -chdir=infra output -raw github_actions_role_arn` output |
+| `S3_BUCKET`          | `s3_bucket_name` output                                             |
+| `SAGEMAKER_ROLE_ARN` | `sagemaker_execution_role_arn` output                               |
 
 ```sh
 terraform -chdir=infra output
@@ -223,9 +182,9 @@ Run from the Actions tab, or:
 
 ```sh
 # no cost - checks OIDC and the variables without submitting
-gh workflow run train.yml -f dry_run=true
+gh workflow run mlops-train.yml -f dry_run=true
 
-gh workflow run train.yml
+gh workflow run mlops-train.yml
 gh run watch
 # ✓ master train · 30953413046
 # Triggered via workflow_dispatch about 5 minutes ago

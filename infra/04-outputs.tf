@@ -17,8 +17,8 @@ output "s3_bucket_name" {
 # ##############################
 # GitHub actions
 # ##############################
-output "github_actions_role_arn" {
-  value = aws_iam_role.github_actions.arn
+output "github_actions_oidc_role_arn" {
+  value = aws_iam_role.github_actions_oidc.arn
 }
 
 # ##############################

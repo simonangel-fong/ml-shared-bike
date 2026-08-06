@@ -28,8 +28,6 @@ data "aws_iam_policy_document" "github_assume" {
       values   = ["sts.amazonaws.com"]
     }
 
-    # Scoped to this repo, by id rather than name so a rename cannot silently
-    # widen it. Two subjects: the default branch, and pull requests against it.
     condition {
       test     = "StringEquals"
       variable = "token.actions.githubusercontent.com:sub"
@@ -38,8 +36,8 @@ data "aws_iam_policy_document" "github_assume" {
   }
 }
 
-resource "aws_iam_role" "github_actions" {
-  name               = "${local.prefix_name}-github-actions-role"
+resource "aws_iam_role" "github_actions_oidc" {
+  name               = "${local.prefix_name}-github-actions-oidc-role"
   assume_role_policy = data.aws_iam_policy_document.github_assume.json
 
   tags = local.default_tags
@@ -128,17 +126,7 @@ data "aws_iam_policy_document" "github_actions" {
     resources = ["*"]
   }
 
-  # ##############################
-  # Deployment
-  # ##############################
-  # Deliberately broad to start with. `terraform apply` touches every resource
-  # in this stack and a policy enumerated up front is wrong in both directions:
-  # it breaks on the first resource nobody predicted, and the fix is a commit
-  # that CI itself cannot deploy.
-  #
-  # To narrow it: run the three workflows, read the CloudTrail events they
-  # actually produce, and replace this with those actions. Until that has been
-  # done, treat a compromise of this workflow as a compromise of the stack.
+  # deployment scope
   statement {
     sid    = "DeployStack"
     effect = "Allow"
@@ -152,9 +140,6 @@ data "aws_iam_policy_document" "github_actions" {
       "iam:*",
       "kms:*",
       "logs:*",
-      # acm:* rather than the two obvious reads: the aws_acm_certificate data
-      # source also calls GetCertificate, which an enumerated list missed and
-      # only failed once CI ran. Narrow this from CloudTrail, not from guesses.
       "acm:*",
     ]
 
@@ -164,6 +149,6 @@ data "aws_iam_policy_document" "github_actions" {
 
 resource "aws_iam_role_policy" "github_actions" {
   name   = "${local.prefix_name}-github-actions-policy"
-  role   = aws_iam_role.github_actions.id
+  role   = aws_iam_role.github_actions_oidc.id
   policy = data.aws_iam_policy_document.github_actions.json
 }

@@ -1,9 +1,9 @@
-name: train
+name: mlops-train
 
-# Training costs money, so the triggers are narrow.
 on:
   push:
-    branches: [master]
+    branches:
+      - master
     paths:
       - "mlops/**"
       - ".github/workflows/train.yml"
@@ -17,11 +17,9 @@ on:
         type: boolean
         default: false
 
-# Not cancel-in-progress: killing the runner orphans the SageMaker job rather
-# than stopping it, leaving it to bill unwatched.
 concurrency:
   group: train-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: false # not cancel existing run
 
 permissions:
   id-token: write # required to request the OIDC token
@@ -33,13 +31,15 @@ jobs:
     timeout-minutes: 60
 
     steps:
-      - uses: actions/checkout@v7
+      - name: Checkout
+        uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v7
+      - name: Cache Python
+        uses: actions/setup-python@v7
         with:
           python-version: "3.12"
+          # enable cache on requirements
           cache: pip
-          # Default patterns are root-level and would not match this file.
           cache-dependency-path: mlops/requirements-dev.txt
 
       - name: Install submit-side deps
@@ -48,13 +48,13 @@ jobs:
       - name: Assume AWS role
         uses: aws-actions/configure-aws-credentials@v6
         with:
-          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
-          aws-region: ca-central-1
+          role-to-assume: ${{ secrets.AWS_OIDC_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
 
       - name: Submit training job
         run: |
           python mlops/submit.py \
             ${{ (github.event_name == 'workflow_dispatch' && inputs.dry_run) && '--dry-run' || '' }} \
             --quantile ${{ inputs.quantile || '0.8' }} \
-            --bucket ${{ vars.ML_BUCKET }} \
+            --bucket ${{ vars.S3_BUCKET }} \
             --role ${{ vars.SAGEMAKER_ROLE_ARN }}
