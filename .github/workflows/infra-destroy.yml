@@ -1,20 +1,5 @@
-name: app-destroy
+name: infra-destroy
 
-# Tears down the stack. Manual only - there is no push trigger and there should
-# not be one.
-#
-# Two scopes, because they carry very different consequences:
-#
-#   serving  lambda, api gateway, cloudfront, dns, ecr. Rebuildable from a
-#            `terraform apply` plus a push of app-backend. Costs nothing but
-#            time.
-#
-#   all      the above plus the s3 bucket, its kms key and the iam roles. The
-#            bucket holds the training splits and every model artifact - 55
-#            objects at last count - and force_destroy is true, so terraform
-#            will empty it without asking. The key is scheduled for deletion
-#            and the artifacts become unreadable even if the objects were
-#            recovered. This is not reversible.
 on:
   workflow_dispatch:
     inputs:
@@ -29,8 +14,6 @@ on:
         type: string
         required: true
 
-# Never run alongside a deploy: an apply racing a destroy leaves state
-# describing resources that no longer exist.
 concurrency:
   group: app-infra
   cancel-in-progress: false
@@ -40,7 +23,7 @@ permissions:
   contents: read
 
 env:
-  AWS_REGION: ca-central-1
+  AWS_REGION: ${{ vars.AWS_REGION }}
   TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
   TF_VAR_cloudflare_zone_id: ${{ vars.CLOUDFLARE_ZONE_ID }}
   TF_VAR_domain_name: ${{ vars.DOMAIN_NAME }}
@@ -51,8 +34,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Before anything else: a dispatch is one misclick, and the input is
-      # typed rather than selected so it cannot be reached by accident.
       - name: Check confirmation
         run: |
           if [ "${{ inputs.confirm }}" != "${{ vars.DOMAIN_NAME }}" ]; then
@@ -61,18 +42,20 @@ jobs:
           fi
           echo "confirmed, scope=${{ inputs.scope }}"
 
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: aws-actions/configure-aws-credentials@v4
+      - name: AWS Authenticate OIDC
+        uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c # v6.2.3
         with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-to-assume: ${{ secrets.AWS_OIDC_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - uses: hashicorp/setup-terraform@v3
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
         with:
           terraform_wrapper: false
 
-      - name: Init
+      - name: Terraform Init
         run: |
           terraform -chdir=infra init -input=false \
             -backend-config="bucket=${{ vars.TF_BACKEND_BUCKET }}" \
@@ -81,18 +64,13 @@ jobs:
             -backend-config="encrypt=true" \
             -backend-config="use_lockfile=true"
 
-      # What the bucket holds, printed before it is emptied. If this run was a
-      # mistake, the log is the only record of what was there.
-      - name: Inventory
+      - name: Print bucket items
         if: inputs.scope == 'all'
         run: |
           bucket=$(terraform -chdir=infra output -raw s3_bucket_name)
           echo "::warning::destroying $bucket and its contents"
           aws s3 ls "s3://$bucket/" --recursive --summarize | tail -5
 
-      # enable_deployment=false removes everything gated on it - the function,
-      # the api, the distribution, the dns record - and leaves the bucket, the
-      # key and the roles standing.
       - name: Destroy serving
         if: inputs.scope == 'serving'
         run: |

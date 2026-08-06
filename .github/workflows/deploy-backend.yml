@@ -1,0 +1,138 @@
+name: deploy-backend
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - "app/lambda/**"
+      - ".github/workflows/deploy-backend.yml"
+  # triggered by mlops-train
+  workflow_run:
+    workflows: [mlops-train]
+    types: [completed]
+    branches: [master]
+  # manual triggered
+  workflow_dispatch:
+    inputs:
+      training_job:
+        description: "training job to deploy (default: latest Completed)"
+        default: ""
+
+concurrency:
+  group: deploy-backend
+  cancel-in-progress: false
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: ${{ vars.AWS_REGION }}
+  FUNCTION: toronto-shared-bike-ml-api
+  JOB_PREFIX: annual-demand-
+  SPLIT_URI: s3://${{ vars.S3_BUCKET }}/data/split/test.parquet
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    # if triggerd by another workflow, execute only when it success
+    if: >-
+      github.event_name != 'workflow_run' ||
+      github.event.workflow_run.conclusion == 'success'
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c # v6.2.3
+        with:
+          role-to-assume: ${{ secrets.AWS_OIDC_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Get most recent model
+        run: |
+          JOB="${{ inputs.training_job }}"
+          if [ -z "$JOB" ]; then
+            JOB=$(aws sagemaker list-training-jobs \
+              --name-contains "$JOB_PREFIX" \
+              --status-equals Completed \
+              --sort-by CreationTime --sort-order Descending \
+              --max-results 1 \
+              --query 'TrainingJobSummaries[0].TrainingJobName' --output text)
+          fi
+          if [ -z "$JOB" ] || [ "$JOB" = "None" ]; then
+            echo "no completed training job matching $JOB_PREFIX" >&2
+            exit 1
+          fi
+
+          DESC=$(aws sagemaker describe-training-job \
+            --training-job-name "$JOB" \
+            --query '[TrainingJobStatus,ModelArtifacts.S3ModelArtifacts]' \
+            --output text)
+          STATUS=$(echo "$DESC" | cut -f1)
+          MODEL_URI=$(echo "$DESC" | cut -f2)
+          # An explicit training_job input bypasses the status filter above.
+          if [ "$STATUS" != "Completed" ]; then
+            echo "job $JOB is $STATUS, not Completed" >&2
+            exit 1
+          fi
+
+          echo "job   $JOB"
+          echo "model $MODEL_URI"
+          echo "TRAINING_JOB=$JOB" >> "$GITHUB_ENV"
+          echo "MODEL_URI=$MODEL_URI" >> "$GITHUB_ENV"
+
+      - name: Fetch model
+        run: |
+          mkdir -p app/lambda/model
+          aws s3 cp "$MODEL_URI" - | tar -xzO model.joblib > app/lambda/model/model.joblib
+          ls -la app/lambda/model/
+
+      - name: Feature parity
+        run: |
+          pip install --quiet -r app/lambda/requirements.txt pyarrow
+          aws s3 cp "$SPLIT_URI" /tmp/test.parquet
+          cd app/lambda && python test_features.py /tmp/test.parquet
+
+      - uses: aws-actions/amazon-ecr-login@d539f0932e70871a027e9d5a9d8fc38589180a64 # v2.1.6
+        id: ecr
+      - name: Build and push
+        env:
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+        run: |
+          TAG="${GITHUB_SHA::7}"
+          IMAGE="$REGISTRY/toronto-shared-bike-ml-api"
+          docker buildx build --platform linux/amd64 \
+            --provenance=false --sbom=false \
+            --output "type=image,name=$IMAGE:$TAG,oci-mediatypes=false,push=true" \
+            app/lambda/
+          echo "IMAGE_URI=$IMAGE:$TAG" >> "$GITHUB_ENV"
+
+      - name: Update function
+        run: |
+          aws lambda update-function-code \
+            --function-name "$FUNCTION" \
+            --image-uri "$IMAGE_URI" \
+            --publish >/dev/null
+          aws lambda wait function-updated --function-name "$FUNCTION"
+          echo "deployed $IMAGE_URI"
+          {
+            echo "| | |"
+            echo "|---|---|"
+            echo "| image | \`$IMAGE_URI\` |"
+            echo "| training job | \`$TRAINING_JOB\` |"
+            echo "| model | \`$MODEL_URI\` |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Smoke test
+        run: |
+          url="https://${{ vars.DOMAIN_NAME }}/api/forecast"
+          body='{"station_id":7000,"date":"2023-07-19","hour":17}'
+          out=$(curl -sS -XPOST "$url" -H 'Content-Type: application/json' -d "$body")
+          echo "$out"
+          echo "$out" | python -c "
+          import json,sys
+          p = json.load(sys.stdin)['predictions'][0]
+          assert isinstance(p, (int, float)), p
+          print(f'ok: {p}')
+          "

@@ -1,0 +1,12 @@
+version: 2
+
+# Dependabot: keep action staying updated; rewrites the SHA and its trailing version comment
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns:
+          - "*"
