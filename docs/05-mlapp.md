@@ -218,7 +218,11 @@ The model takes 17 features; a user knows three. The gap is closed in the `handl
 ### CICD
 
 ```sh
+# deploy infrastructure
 gh workflow run app-infra.yml
 
-gh run view
+# deploy frontend
+gh workflow run app-frontend.yml
+
+gh run watch
 ```
