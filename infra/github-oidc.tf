@@ -173,8 +173,10 @@ data "aws_iam_policy_document" "github_actions" {
       "iam:*",
       "kms:*",
       "logs:*",
-      "acm:DescribeCertificate",
-      "acm:ListCertificates",
+      # acm:* rather than the two obvious reads: the aws_acm_certificate data
+      # source also calls GetCertificate, which an enumerated list missed and
+      # only failed once CI ran. Narrow this from CloudTrail, not from guesses.
+      "acm:*",
     ]
 
     resources = ["*"]

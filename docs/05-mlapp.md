@@ -219,4 +219,6 @@ The model takes 17 features; a user knows three. The gap is closed in the `handl
 
 ```sh
 gh workflow run app-infra.yml
+
+gh run view
 ```
