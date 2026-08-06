@@ -6,7 +6,7 @@ terraform -chdir=infra plan
 terraform -chdir=infra apply -auto-approve
 
 terraform -chdir=infra output sagemaker_execution_role_arn
-terraform -chdir=infra output ml_bucket_name
+terraform -chdir=infra output s3_bucket_name
 
 terraform -chdir=infra destroy -auto-approve
 ```

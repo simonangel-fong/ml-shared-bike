@@ -7,7 +7,7 @@ s3://<bucket>/trains/<job-name>/.
 The bucket and role come from Terraform, which owns them:
 
     python mlops/submit.py \
-      --bucket $(terraform -chdir=infra output -raw ml_bucket_name) \
+      --bucket $(terraform -chdir=infra output -raw s3_bucket_name) \
       --role $(terraform -chdir=infra output -raw sagemaker_execution_role_arn)
 
 Add --dry-run to print the plan without submitting, or --no-wait to return as
@@ -50,7 +50,7 @@ def parse_args() -> argparse.Namespace:
     p.add_argument(
         "--bucket",
         required=True,
-        help="ml bucket name (terraform output ml_bucket_name)",
+        help="ml bucket name (terraform output s3_bucket_name)",
     )
     p.add_argument(
         "--role",

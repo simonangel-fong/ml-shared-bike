@@ -86,7 +86,7 @@ jobs:
       - name: Inventory
         if: inputs.scope == 'all'
         run: |
-          bucket=$(terraform -chdir=infra output -raw ml_bucket_name)
+          bucket=$(terraform -chdir=infra output -raw s3_bucket_name)
           echo "::warning::destroying $bucket and its contents"
           aws s3 ls "s3://$bucket/" --recursive --summarize | tail -5
 

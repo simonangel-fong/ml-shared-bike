@@ -71,7 +71,7 @@ model to justify a config file.
 earlier version scanned IAM and silently picked up an unmanaged QuickSetup
 role. Everything persistent is Terraform's.
 
-S3 layout on `ml_bucket_name`:
+S3 layout on `s3_bucket_name`:
 
 ```
 data/split/              train/val/test parquet + split.json
@@ -139,7 +139,7 @@ The bucket and role are Terraform's, so pass them from its outputs rather than
 hardcoding. Check the plan before spending anything:
 
 ```sh
-terraform -chdir=infra output -raw ml_bucket_name
+terraform -chdir=infra output -raw s3_bucket_name
 # toronto-shared-bike-ml-ud3m7h
 
 terraform -chdir=infra output -raw sagemaker_execution_role_arn
@@ -209,7 +209,7 @@ Actions → Variables**. None are secret - they are ARNs and a bucket name.
 | Variable             | From                                  |
 | -------------------- | ------------------------------------- |
 | `AWS_ROLE_ARN`       | `github_actions_role_arn` output      |
-| `ML_BUCKET`          | `ml_bucket_name` output               |
+| `ML_BUCKET`          | `s3_bucket_name` output               |
 | `SAGEMAKER_ROLE_ARN` | `sagemaker_execution_role_arn` output |
 
 ```sh
