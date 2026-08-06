@@ -137,7 +137,7 @@ python mlops/submit.py --dry-run --bucket toronto-shared-bike-ml-ud3m7h   --role
 
 # dry run - nothing submitted
 
-python mlops/submit.py --bucket toronto-shared-bike-ml-ud3m7h   --role arn:aws:iam::099139718958:role/toronto-shared-bike-ml-sagemaker-execution-role
+python mlops/submit.py --bucket toronto-shared-bike-ml-g6pf13   --role arn:aws:iam::099139718958:role/toronto-shared-bike-ml-sagemaker-execution-role
 # 2026-08-04 20:32:45 Uploading - Uploading generated training modeltest 2022
 #   MAE                1.0452
 #   MAE_peak           1.5513

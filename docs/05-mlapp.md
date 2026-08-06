@@ -10,6 +10,7 @@
   - [Development](#development)
     - [Lambda function](#lambda-function)
     - [Build and push image](#build-and-push-image)
+    - [Deploy frontend](#deploy-frontend)
     - [API gateway](#api-gateway)
     - [DNS](#dns)
     - [Feature derivation](#feature-derivation)
@@ -99,12 +100,10 @@ curl -s -XPOST "http://localhost:8080/2015-03-31/functions/function/invocations"
 # {"statusCode": 200, "headers": {"Content-Type": "application/json"}, "body": "{\"predictions\": [6.3166]}"}
 
 # batch
- curl -s -XPOST "http://localhost:8080/2015-03-31/functions/function/invocations" -d '{"rawPath":"/api/forecast","body":"{\"instances\":[{\"station_id\":7000,\"date\":\"2023-07-19\",\"hour\":8},{\"station_id\":7000,\"date\":\"2023-07-19\",\"hour\":17}]}"}'; echo
+curl -s -XPOST "http://localhost:8080/2015-03-31/functions/function/invocations" -d '{"rawPath":"/api/forecast","body":"{\"instances\":[{\"station_id\":7000,\"date\":\"2023-07-19\",\"hour\":8},{\"station_id\":7000,\"date\":\"2023-07-19\",\"hour\":17}]}"}'; echo
 # {"statusCode": 200, "headers": {"Content-Type": "application/json"}, "body": "{\"predictions\": [3.4854, 6.3166]}"}
 
 # error handling
-curl -s -XPOST "http://localhost:8080/2015-03-31/functions/function/invocations" -d '{"rawPath":"/api/forecast","body":"{\"station_id\":9999,\"date\":\"2023-07-19\",\"hour\":17}"}'
-
 curl -s -XPOST "http://localhost:8080/2015-03-31/functions/function/invocations" -d '{"rawPath":"/api/forecast","body":"{\"station_id\":9999,\"date\":\"2023-07-19\",\"hour\":17}"}';echo
 # {"statusCode": 400, "headers": {"Content-Type": "application/json"}, "body": "{\"error\": \"unknown station_id: 9999\"}"}
 ```
@@ -122,6 +121,21 @@ terraform -chdir=infra output -raw ecr_repository_url
 
 # tag = v1
 docker buildx build --platform linux/amd64 --provenance=false --sbom=false --output "type=image,name=099139718958.dkr.ecr.ca-central-1.amazonaws.com/toronto-shared-bike-ml-api:v1,oci-mediatypes=false,push=true" app/lambda/
+
+docker run --rm -d --name ecr-shared-bike-ml-api  -p 8080:8080 099139718958.dkr.ecr.ca-central-1.amazonaws.com/toronto-shared-bike-ml-api:v1
+```
+
+---
+
+### Deploy frontend
+
+```sh
+terraform -chdir=infra output -raw s3_bucket_name
+# toronto-shared-bike-ml-ud3m7h
+
+terraform -chdir=infra output -raw kms_key_arn
+
+aws s3 sync app/web/ "s3://toronto-shared-bike-ml-ud3m7h/web/" --delete --sse aws:kms --sse-kms-key-id "<mks-key>" --content-type "text/html; charset=utf-8" --exclude "*" --include "*.html"
 ```
 
 ---
@@ -217,13 +231,13 @@ The model takes 17 features; a user knows three. The gap is closed in the `handl
 
 ```sh
 # deploy infrastructure
-gh workflow run app-infra.yml
+gh workflow run infra-deploy.yml
 
 # deploy frontend
-gh workflow run app-frontend.yml
+gh workflow run deploy-frontend.yml
 
 # deploy backend
-gh workflow run app-backend.yml
+gh workflow run deploy-backend.yml
 
 gh run watch
 ```
@@ -238,17 +252,10 @@ Teardown is manual only, and takes a scope plus a typed confirmation:
 # serving only: lambda, api gateway, cloudfront, dns.
 # keeps the bucket, the kms key and the iam roles - rebuildable with
 # app-infra then app-backend.
-gh workflow run app-destroy.yml -f scope=serving -f confirm=trip-ml.arguswatcher.net
+gh workflow run infra-destroy.yml -f scope=serving -f confirm=trip-ml.arguswatcher.net
 
 # everything, including the ml bucket and its key.
-gh workflow run app-destroy.yml -f scope=all -f confirm=trip-ml.arguswatcher.net
+gh workflow run infra-destroy.yml -f scope=all -f confirm=trip-ml.arguswatcher.net
 ```
 
-`scope=all` is not reversible. The bucket has `force_destroy = true` and holds
-the training splits and every model artifact, so terraform empties it without
-asking; the kms key is then scheduled for deletion, which makes the artifacts
-unreadable even if the objects were recovered from elsewhere. The confirmation
-input has to be typed rather than selected for exactly this reason.
-
-Verified: `scope=serving` destroys 15 resources and leaves the bucket, key,
-ecr repository and iam roles standing.
+![deploy01](./img/deploy01.png)

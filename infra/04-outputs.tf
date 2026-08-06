@@ -8,6 +8,13 @@ output "sagemaker_execution_role_arn" {
 }
 
 # ##############################
+# KMS
+# ##############################
+output "kms_key_arn" {
+  value = aws_kms_key.this.arn
+}
+
+# ##############################
 # S3
 # ##############################
 output "s3_bucket_name" {
@@ -29,13 +36,13 @@ output "ecr_repository_url" {
   value       = aws_ecr_repository.api.repository_url
 }
 
-# ##############################
-# Lambda
-# ##############################
-output "lambda_function_url" {
-  description = "IAM-signed lambda url for direct testing; null until an image is pushed"
-  value       = try(aws_lambda_function_url.api[0].function_url, null)
-}
+# # ##############################
+# # Lambda
+# # ##############################
+# output "lambda_function_url" {
+#   description = "IAM-signed lambda url for direct testing; null until an image is pushed"
+#   value       = try(aws_lambda_function_url.api[0].function_url, null)
+# }
 
 # ##############################
 # API GTW
