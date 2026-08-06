@@ -1,26 +1,12 @@
-"""Lambda handler for the annual-demand quantile model.
-
+"""
 The model is baked into the image and loaded once at import, so only a cold
 start pays for it; warm invocations reuse the same object.
 
-Three routes:
-
+Routes:
     POST /forecast   {"station_id": 7000, "date": "2023-07-19", "hour": 17}
     POST /predict    all 17 features, as the model sees them
     GET  /stations   the station list and the year this build serves
-
-/forecast is what the front end uses. It derives the 15 calendar features and
-looks up the 2 prior-year ones, so a caller only needs to know what it actually
-knows: a station, a date and an hour. /predict stays for testing and for any
-caller that already holds real feature vectors.
-
-Deriving features here rather than in the browser keeps one implementation of
-the feature logic, in the same language and next to the model. A second copy in
-JavaScript would drift, and a sin/cos convention mismatch produces predictions
-that are wrong but entirely plausible.
-
 Output:
-
     {"predictions": [4.9716]}
 
 Predictions are clipped at zero to match train.py - a quantile fit can go
@@ -64,14 +50,7 @@ FEATURES = [
     "py_station_month_mean",
 ]
 
-# Ontario statutory holidays, transcribed from the dates actually flagged in
-# the training data rather than from a package - the upstream pipeline's
-# definition is what the model learned, and it does not include Family Day in
-# 2019 or the August civic holiday at all. 2023 follows the same nine-holiday
-# pattern.
-#
-# A `holidays` package would be more general and less faithful; it also reaches
-# the network on some code paths, which is wrong inside a Lambda.
+# Ontario statutory holidays
 HOLIDAYS = {
     # 2019-2022: observed in the training data
     "2019-01-01", "2019-02-18", "2019-04-19", "2019-05-20", "2019-07-01",
@@ -88,8 +67,6 @@ HOLIDAYS = {
     "2023-07-01", "2023-09-04", "2023-10-09", "2023-12-25", "2023-12-26",
 }
 
-# Module scope on purpose: Lambda reuses the process across invocations, so all
-# of this runs once per container rather than once per request.
 MODEL = joblib.load(MODEL_PATH)
 PY_HOUR_WEEKDAY = json.loads((FEATURES_DIR / "py_hour_weekday.json").read_text())
 PY_MONTH = json.loads((FEATURES_DIR / "py_month.json").read_text())
@@ -117,17 +94,9 @@ def build_features(station_id: int, day: date_cls, hour: int) -> dict:
     """
     month = day.month
 
-    # Sunday=1 .. Saturday=7, the Spark convention the features were built with
-    # upstream - NOT python's Monday=0. Verified against the training data:
-    # 2022-08-21 is a Sunday and is stored as 1. Getting this wrong shifts every
-    # prediction by a day or two without erroring, so it is checked in the
-    # feature parity test rather than trusted.
     weekday = day.isoweekday() % 7 + 1
     week_of_year = day.isocalendar()[1]
 
-    # Absent from the table means that station saw no trips in that slot last
-    # year. The dataset-wide mean is a poor guess but a better one than zero,
-    # which the model reads as a genuinely dead station.
     hw = PY_HOUR_WEEKDAY.get(
         f"{station_id}|{hour}|{weekday}", META["default_hour_weekday"]
     )

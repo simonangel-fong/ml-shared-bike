@@ -1,22 +1,11 @@
 # deploy-s3-web.tf
 
-# ##############################
-# S3 object
-# ##############################
-resource "aws_s3_object" "web_index" {
-  count = var.enable_deployment ? 1 : 0
-
-  bucket = aws_s3_bucket.ml.id
-  key    = "web/index.html"
-
-  source      = "${path.module}/../app/web/index.html"
-  source_hash = filemd5("${path.module}/../app/web/index.html")
-
-  kms_key_id             = aws_kms_key.this.arn
-  server_side_encryption = "aws:kms"
-
-  content_type = "text/html; charset=utf-8"
-}
+# The site content is NOT here. Terraform owns the plumbing - the bucket, the
+# OAC, the bucket policy - and .github/workflows/app-frontend.yml owns what is
+# in web/, via `aws s3 cp`.
+#
+# Both owning it would mean the next `terraform apply` silently reverts whatever
+# CI last uploaded, which looks like a deploy that vanished.
 
 
 # ##############################

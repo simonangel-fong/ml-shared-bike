@@ -41,8 +41,8 @@ output "lambda_function_url" {
 # API GTW
 # ##############################
 output "api_gtw_url" {
-  description = "public prediction endpoint via api gateway"
-  value       = try("${aws_apigatewayv2_api.this[0].api_endpoint}/predict", null)
+  description = "api gateway base url; routes are /stations, /forecast, /predict"
+  value       = try(aws_apigatewayv2_api.this[0].api_endpoint, null)
 }
 
 # ##############################

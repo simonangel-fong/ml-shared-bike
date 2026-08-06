@@ -9,11 +9,18 @@ locals {
   github_repo     = "ml-shared-bike"
   github_repo_id  = "1314382375"
 
-  github_sub = join("", [
+  github_repo_id_prefix = join("", [
     "repo:${local.github_owner}@${local.github_owner_id}",
     "/${local.github_repo}@${local.github_repo_id}",
-    ":ref:refs/heads/${local.github_branch}",
   ])
+
+  # Pushes to the default branch, and pull requests targeting it. The pull
+  # request subject is a different string - without it, plan-on-PR cannot
+  # assume the role at all.
+  github_subs = [
+    "${local.github_repo_id_prefix}:ref:refs/heads/${local.github_branch}",
+    "${local.github_repo_id_prefix}:pull_request",
+  ]
 }
 
 # ##############################
@@ -42,11 +49,12 @@ data "aws_iam_policy_document" "github_assume" {
       values   = ["sts.amazonaws.com"]
     }
 
-    # Scoped to repo and branch.
+    # Scoped to this repo, by id rather than name so a rename cannot silently
+    # widen it. Two subjects: the default branch, and pull requests against it.
     condition {
       test     = "StringEquals"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = [local.github_sub]
+      values   = local.github_subs
     }
   }
 }
@@ -136,6 +144,37 @@ data "aws_iam_policy_document" "github_actions" {
       "logs:GetLogEvents",
       "logs:DescribeLogStreams",
       "logs:DescribeLogGroups",
+    ]
+
+    resources = ["*"]
+  }
+
+  # ##############################
+  # Deployment
+  # ##############################
+  # Deliberately broad to start with. `terraform apply` touches every resource
+  # in this stack and a policy enumerated up front is wrong in both directions:
+  # it breaks on the first resource nobody predicted, and the fix is a commit
+  # that CI itself cannot deploy.
+  #
+  # To narrow it: run the three workflows, read the CloudTrail events they
+  # actually produce, and replace this with those actions. Until that has been
+  # done, treat a compromise of this workflow as a compromise of the stack.
+  statement {
+    sid    = "DeployStack"
+    effect = "Allow"
+
+    actions = [
+      "ecr:*",
+      "lambda:*",
+      "apigateway:*",
+      "cloudfront:*",
+      "s3:*",
+      "iam:*",
+      "kms:*",
+      "logs:*",
+      "acm:DescribeCertificate",
+      "acm:ListCertificates",
     ]
 
     resources = ["*"]

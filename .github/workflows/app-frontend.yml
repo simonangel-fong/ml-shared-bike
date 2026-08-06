@@ -1,0 +1,63 @@
+name: app-frontend
+
+# The static page. Separate from the backend because it is one file that
+# changes often and carries no risk - a copy to s3 and a cache invalidation,
+# no image build, no terraform.
+on:
+  push:
+    branches: [master]
+    paths:
+      - "app/web/**"
+      - ".github/workflows/app-frontend.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: app-frontend
+  cancel-in-progress: true # last push wins; a superseded upload is just noise
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: ca-central-1
+  BUCKET: toronto-shared-bike-ml-ud3m7h
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # --sse aws:kms because the bucket is encrypted with the project key, and
+      # the CloudFront grant in kms.tf is written against it. A plain copy lands
+      # with a different key and the distribution answers 403.
+      - name: Upload
+        run: |
+          aws s3 sync app/web/ "s3://$BUCKET/web/" \
+            --delete \
+            --sse aws:kms \
+            --content-type "text/html; charset=utf-8" \
+            --exclude "*" --include "*.html"
+
+      # CloudFront caches the page, so the upload is invisible at the edge
+      # until this runs.
+      - name: Invalidate
+        run: |
+          dist=$(aws cloudfront list-distributions \
+            --query "DistributionList.Items[?Aliases.Items[0]=='${{ vars.DOMAIN_NAME }}'].Id | [0]" \
+            --output text)
+          aws cloudfront create-invalidation --distribution-id "$dist" --paths '/*' >/dev/null
+          echo "invalidated $dist"
+
+      - name: Smoke test
+        run: |
+          code=$(curl -sS -o /dev/null -w '%{http_code}' "https://${{ vars.DOMAIN_NAME }}/")
+          echo "GET / -> $code"
+          test "$code" = "200"
