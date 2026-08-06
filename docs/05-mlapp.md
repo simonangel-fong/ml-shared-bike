@@ -229,3 +229,28 @@ gh workflow run app-backend.yml
 
 gh run watch
 ```
+
+Each workflow triggers on its own paths - `infra/**`, `app/web/**`,
+`app/lambda/**` - so a page edit does not rebuild an image and an image build
+does not apply terraform.
+
+Teardown is manual only, and takes a scope plus a typed confirmation:
+
+```sh
+# serving only: lambda, api gateway, cloudfront, dns.
+# keeps the bucket, the kms key and the iam roles - rebuildable with
+# app-infra then app-backend.
+gh workflow run app-destroy.yml -f scope=serving -f confirm=trip-ml.arguswatcher.net
+
+# everything, including the ml bucket and its key.
+gh workflow run app-destroy.yml -f scope=all -f confirm=trip-ml.arguswatcher.net
+```
+
+`scope=all` is not reversible. The bucket has `force_destroy = true` and holds
+the training splits and every model artifact, so terraform empties it without
+asking; the kms key is then scheduled for deletion, which makes the artifacts
+unreadable even if the objects were recovered from elsewhere. The confirmation
+input has to be typed rather than selected for exactly this reason.
+
+Verified: `scope=serving` destroys 15 resources and leaves the bucket, key,
+ecr repository and iam roles standing.

@@ -1,0 +1,114 @@
+name: app-destroy
+
+# Tears down the stack. Manual only - there is no push trigger and there should
+# not be one.
+#
+# Two scopes, because they carry very different consequences:
+#
+#   serving  lambda, api gateway, cloudfront, dns, ecr. Rebuildable from a
+#            `terraform apply` plus a push of app-backend. Costs nothing but
+#            time.
+#
+#   all      the above plus the s3 bucket, its kms key and the iam roles. The
+#            bucket holds the training splits and every model artifact - 55
+#            objects at last count - and force_destroy is true, so terraform
+#            will empty it without asking. The key is scheduled for deletion
+#            and the artifacts become unreadable even if the objects were
+#            recovered. This is not reversible.
+on:
+  workflow_dispatch:
+    inputs:
+      scope:
+        description: "what to destroy"
+        type: choice
+        options: [serving, all]
+        default: serving
+        required: true
+      confirm:
+        description: "type the domain name to confirm (trip-ml.arguswatcher.net)"
+        type: string
+        required: true
+
+# Never run alongside a deploy: an apply racing a destroy leaves state
+# describing resources that no longer exist.
+concurrency:
+  group: app-infra
+  cancel-in-progress: false
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: ca-central-1
+  TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+  TF_VAR_cloudflare_zone_id: ${{ vars.CLOUDFLARE_ZONE_ID }}
+  TF_VAR_domain_name: ${{ vars.DOMAIN_NAME }}
+  TF_VAR_acm_certificate_domain: ${{ vars.ACM_CERTIFICATE_DOMAIN }}
+
+jobs:
+  destroy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Before anything else: a dispatch is one misclick, and the input is
+      # typed rather than selected so it cannot be reached by accident.
+      - name: Check confirmation
+        run: |
+          if [ "${{ inputs.confirm }}" != "${{ vars.DOMAIN_NAME }}" ]; then
+            echo "::error::confirmation did not match ${{ vars.DOMAIN_NAME }} - nothing was destroyed"
+            exit 1
+          fi
+          echo "confirmed, scope=${{ inputs.scope }}"
+
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+
+      - name: Init
+        run: |
+          terraform -chdir=infra init -input=false \
+            -backend-config="bucket=${{ vars.TF_BACKEND_BUCKET }}" \
+            -backend-config="key=${{ vars.TF_BACKEND_KEY }}" \
+            -backend-config="region=${{ env.AWS_REGION }}" \
+            -backend-config="encrypt=true" \
+            -backend-config="use_lockfile=true"
+
+      # What the bucket holds, printed before it is emptied. If this run was a
+      # mistake, the log is the only record of what was there.
+      - name: Inventory
+        if: inputs.scope == 'all'
+        run: |
+          bucket=$(terraform -chdir=infra output -raw ml_bucket_name)
+          echo "::warning::destroying $bucket and its contents"
+          aws s3 ls "s3://$bucket/" --recursive --summarize | tail -5
+
+      # enable_deployment=false removes everything gated on it - the function,
+      # the api, the distribution, the dns record - and leaves the bucket, the
+      # key and the roles standing.
+      - name: Destroy serving
+        if: inputs.scope == 'serving'
+        run: |
+          terraform -chdir=infra apply -auto-approve -input=false \
+            -var "enable_deployment=false"
+
+      - name: Destroy all
+        if: inputs.scope == 'all'
+        run: terraform -chdir=infra destroy -auto-approve -input=false
+
+      - name: Summary
+        run: |
+          echo "### destroyed: ${{ inputs.scope }}" >> "$GITHUB_STEP_SUMMARY"
+          if [ "${{ inputs.scope }}" = "serving" ]; then
+            echo "Bucket, kms key and iam roles kept. Rebuild with app-infra then app-backend." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Everything removed, including the ml bucket and its key." >> "$GITHUB_STEP_SUMMARY"
+            echo "The kms key is pending deletion; artifacts are unreadable." >> "$GITHUB_STEP_SUMMARY"
+          fi
