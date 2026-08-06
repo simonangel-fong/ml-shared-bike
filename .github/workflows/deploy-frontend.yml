@@ -1,4 +1,4 @@
-name: deploy-frontend
+name: Deploy frontend
 
 on:
   push:
@@ -23,7 +23,7 @@ env:
   KMS_ALIAS: ${{ vars.KMS_ALIAS }}
 
 jobs:
-  deploy:
+  deploy-frontend:
     runs-on: ubuntu-latest
 
     steps:

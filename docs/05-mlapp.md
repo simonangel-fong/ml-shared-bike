@@ -11,6 +11,7 @@
     - [Lambda function](#lambda-function)
     - [Build and push image](#build-and-push-image)
     - [Deploy frontend](#deploy-frontend)
+    - [Deploy backend](#deploy-backend)
     - [API gateway](#api-gateway)
     - [DNS](#dns)
     - [Feature derivation](#feature-derivation)
@@ -85,15 +86,15 @@ terraform -chdir=infra apply -auto-approve
 
 ```sh
 # fetch the model for local development
-aws s3 cp s3://toronto-shared-bike-ml-ud3m7h/trains/annual-demand-q80-2026-08-04-22-00-42-965/output/model.tar.gz | tar -xzO model.joblib > app/lambda/model/model.joblib
+aws s3 cp s3://toronto-shared-bike-ml-ud3m7h/trains/annual-demand-q80-2026-08-04-22-00-42-965/output/model.tar.gz - | tar -xzO model.joblib > app/lambda/model/model.joblib
 
 docker build -t shared-bike-ml-api app/lambda/
 docker run --rm -d --name shared-bike-ml-api  -p 8080:8080 bike-ml-api
 
 # local test
 # station
-curl -s -XPOST "http://localhost:8080/2015-03-31/functions/function/invocations" -d '{"rawPath":"/api/stations"}'
-# {"statusCode": 200, "headers": {"Content-Type": "application/json"}, "body": "{\"stations\": [{\"id\": 7000, \"name\": \"Fort York Blvd / Capreol Ct\"}, {\"id\": 7001, \"name\": \"Wellesley Station Green P\"}, {\"id\": 7002, \"name\": \"St. George St / Bloor St W\"}, {\"id\": 7006, \"name\": \"Bay St / College St (East Side)\"}, {\"id\": 7007, \"name\": \"College St / Huron St\"}, {\"id\": 7012, \"name\": \"Elizabeth St / Edward St (Bus Terminal)\"}, {\"id\": 7014, \"name\": \"Sherbourne St / Carlton St (Allan Gardens)\"}, {\"id\": 7015, \"name\": \"King St W / Bay St (West Side)\"}, {\"id\": 7016, \"name\": \"Bay St / Queens Quay W (Ferry Terminal)\"}, {\"id\": 7020, \"name\": \"Phoebe St / Spadina Ave\"},
+curl -s -XPOST "http://localhost:8080/2015-03-31/functions/function/invocations" -d '{"rawPath":"/api/stations"}'; echo
+# {"statusCode": 200, "headers": {"Content-Type": "application/json"}, "body": "{\"stations\": [{\"id\": 7000, \"name\": \"Fort York Blvd / Capreol Ct\"}, {\"id\": 7001, \"name\": \"Wellesley Station Green P\"}, {\"id\": 7002, \"name\": \"St. George St / Bloor St W\"},
 
 # predict
 curl -s -XPOST "http://localhost:8080/2015-03-31/functions/function/invocations" -d '{"rawPath":"/api/forecast","body":"{\"station_id\":7000,\"date\":\"2023-07-19\",\"hour\":17}"}'; echo
@@ -122,7 +123,7 @@ terraform -chdir=infra output -raw ecr_repository_url
 # tag = v1
 docker buildx build --platform linux/amd64 --provenance=false --sbom=false --output "type=image,name=099139718958.dkr.ecr.ca-central-1.amazonaws.com/toronto-shared-bike-ml-api:v1,oci-mediatypes=false,push=true" app/lambda/
 
-docker run --rm -d --name ecr-shared-bike-ml-api  -p 8080:8080 099139718958.dkr.ecr.ca-central-1.amazonaws.com/toronto-shared-bike-ml-api:v1
+docker run --rm -d --name ecr-shared-bike-ml-api -p 8080:8080 099139718958.dkr.ecr.ca-central-1.amazonaws.com/toronto-shared-bike-ml-api:v1
 ```
 
 ---
@@ -136,6 +137,16 @@ terraform -chdir=infra output -raw s3_bucket_name
 terraform -chdir=infra output -raw kms_key_arn
 
 aws s3 sync app/web/ "s3://toronto-shared-bike-ml-ud3m7h/web/" --delete --sse aws:kms --sse-kms-key-id "<mks-key>" --content-type "text/html; charset=utf-8" --exclude "*" --include "*.html"
+```
+
+---
+
+### Deploy backend
+
+```sh
+aws lambda update-function-code --function-name "toronto-shared-bike-ml-api" --image-uri "099139718958.dkr.ecr.ca-central-1.amazonaws.com/toronto-shared-bike-ml-api:v1" --publish
+
+aws lambda wait function-updated --function-name "toronto-shared-bike-ml-api"
 ```
 
 ---

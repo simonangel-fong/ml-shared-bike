@@ -1,4 +1,4 @@
-name: infra-deploy
+name: Deploy infrastrucure
 
 on:
   pull_request:
@@ -30,7 +30,7 @@ env:
   TF_VAR_acm_certificate_domain: ${{ vars.ACM_CERTIFICATE_DOMAIN }}
 
 jobs:
-  terraform:
+  terraform-infra-deploy:
     runs-on: ubuntu-latest
 
     steps:

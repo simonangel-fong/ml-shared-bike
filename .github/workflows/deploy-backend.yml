@@ -1,4 +1,4 @@
-name: deploy-backend
+name: Deploy backend
 
 on:
   push:
@@ -34,7 +34,7 @@ env:
   SPLIT_URI: s3://${{ vars.S3_BUCKET }}/data/split/test.parquet
 
 jobs:
-  deploy:
+  deploy-backend:
     runs-on: ubuntu-latest
     # if triggerd by another workflow, execute only when it success
     if: >-

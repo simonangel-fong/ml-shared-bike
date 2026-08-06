@@ -1,4 +1,4 @@
-name: mlops-train
+name: Train model
 
 on:
   push:
