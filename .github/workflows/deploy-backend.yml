@@ -9,7 +9,7 @@ on:
       - ".github/workflows/deploy-backend.yml"
   # triggered by mlops-train
   workflow_run:
-    workflows: [mlops-train]
+    workflows: [Train model]
     types: [completed]
     branches: [master]
   # manual triggered

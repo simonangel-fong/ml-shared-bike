@@ -77,11 +77,11 @@ Models are developed and evaluated locally using `Jupyter Notebook` and `MLflow`
 
 ### Training Pipeline with `Amazon Sagemaker`
 
+**`GitHub Actions`: Automate training job**
+![mlops_github01](./docs/img/mlops_github01.png)
+
 **`Amazone Sagemaker`: Training Jobs**
 ![sagemaker_training_job01](./docs/img/sagemaker_training_job01.png)
-
-**`GitHub Actions`: MLOps Pipeline**
-![mlops_github01](./docs/img/mlops_github01.png)
 
 ---
 

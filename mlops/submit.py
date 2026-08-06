@@ -1,4 +1,5 @@
-"""Submit mlops/train.py as a SageMaker training job.
+"""
+Submit mlops/train.py as a SageMaker training job.
 
 Runs the same script that runs locally, on managed compute, against the split
 already on S3. Writes model.tar.gz (model.skops + metrics.json) under
