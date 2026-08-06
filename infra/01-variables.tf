@@ -11,10 +11,11 @@ variable "project" {
   default = "toronto-shared-bike"
 }
 
+# !!!IMPORTANT: Control whether to serve the model.
 variable "enable_deployment" {
   description = "Create the serving stack. Requires an image already pushed at lambda_image_tag."
   type        = bool
-  default     = false
+  default     = true
 }
 
 # ##############################
@@ -23,7 +24,7 @@ variable "enable_deployment" {
 variable "lambda_image_tag" {
   description = "Tag of the API image in the project ECR repo."
   type        = string
-  default     = "latest"
+  default     = "v1"
 }
 
 # ##############################

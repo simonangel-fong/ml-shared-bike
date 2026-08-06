@@ -10,9 +10,7 @@ A project demonstrates an end-to-end `MLOps` workflow by training, deploying, an
     - [Model Development \& Training \& Validation](#model-development--training--validation)
     - [Training Pipeline with `Amazon Sagemaker`](#training-pipeline-with-amazon-sagemaker)
   - [Application Deployment](#application-deployment)
-    - [Architecture](#architecture)
-    - [Devops Pipeline](#devops-pipeline)
-    - [Monitoring](#monitoring)
+  - [Monitoring](#monitoring)
   - [Takeway \& Roadmap](#takeway--roadmap)
   - [Documentation](#documentation)
 
@@ -73,31 +71,34 @@ Train, evaluate, and track model training by `MLflow`
 
 ### Training Pipeline with `Amazon Sagemaker`
 
-`Amazone Sagemaker`
+**`Amazone Sagemaker`: Training Jobs**
+![sagemaker_training_job01](./docs/img/sagemaker_training_job01.png)
 
-GitHub Action + Sagemaker
+**`GitHub Actions`: MLOps Pipeline**
+![mlops_github01](./docs/img/mlops_github01.png)
 
 ---
 
 ## Application Deployment
 
-### Architecture
+- Deploy ML application on AWS:
+  - `Lambda`(Docker Image): serverless inference
+  - `API Gateway`(HTTPv2): entry point for service with low cost
+  - `S3 bucket`: host frontend files
+  - `Cloudfront`: cached for performance
+  - `Cloudflare`: DNS
 
-diagram
 
-S3 + Lambda + api gateway + cloudfront + cloudflare
 
-Capture
+
+- Automate deployment by `GitHub Actions` workflows
+  - Triggered when updated codes and/or completed model training jobs
+  - Build and push Docker image
+  - Update application in AWS.
 
 ---
 
-### Devops Pipeline
-
-GitHub Action + terraform
-
----
-
-### Monitoring
+## Monitoring
 
 Cloudwatch + grafana
 

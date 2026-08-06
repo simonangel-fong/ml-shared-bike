@@ -26,7 +26,7 @@ permissions:
   contents: read
 
 jobs:
-  train:
+  train-model-sagemaker:
     runs-on: ubuntu-latest
     timeout-minutes: 60
 

@@ -168,11 +168,11 @@ tar -xzf model.tar.gz && cat metrics.json
 
 GitHub Actions Variables
 
-| Variable             | From                                                                |
-| -------------------- | ------------------------------------------------------------------- |
-| `AWS_OIDC_ROLE_ARN`  | `terraform -chdir=infra output -raw github_actions_role_arn` output |
-| `S3_BUCKET`          | `s3_bucket_name` output                                             |
-| `SAGEMAKER_ROLE_ARN` | `sagemaker_execution_role_arn` output                               |
+| Variable             | From                                                                     |
+| -------------------- | ------------------------------------------------------------------------ |
+| `AWS_OIDC_ROLE_ARN`  | `terraform -chdir=infra output -raw github_actions_role_arn` output      |
+| `S3_BUCKET`          | `terraform -chdir=infra output -raw s3_bucket_name` output               |
+| `SAGEMAKER_ROLE_ARN` | `terraform -chdir=infra output -raw sagemaker_execution_role_arn` output |
 
 ```sh
 terraform -chdir=infra output
@@ -185,6 +185,7 @@ Run from the Actions tab, or:
 gh workflow run mlops-train.yml -f dry_run=true
 
 gh workflow run mlops-train.yml
+
 gh run watch
 # ✓ master train · 30953413046
 # Triggered via workflow_dispatch about 5 minutes ago
@@ -200,19 +201,4 @@ gh run watch
 #   ✓ Complete job
 ```
 
-> Start with `dry_run=true`. It exercises the whole identity path - assume role,
-> resolve variables, build the estimator - and stops before spending anything,
-> so a failure is unambiguously auth or config.
-
-> **The trust policy needs numeric IDs.** Repos created after 2026-07-15 use
-> immutable subject claims: `repo:owner@<owner-id>/name@<repo-id>:ref:...`. The
-> older name-based form fails with a bare "Not authorized to perform
-> sts:AssumeRoleWithWebIdentity" - the policy is never reached, so the message
-> does not say why. The IDs are in `infra/github-oidc.tf`:
->
-> ```sh
-> gh api repos/simonangel-fong/ml-shared-bike --jq '{id, owner_id: .owner.id}'
-> ```
-
-> `cancel-in-progress` is off: cancelling the runner abandons the SageMaker job
-> rather than stopping it.
+![mlops_github01](./img/mlops_github01.png)

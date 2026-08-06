@@ -84,9 +84,7 @@ terraform -chdir=infra apply -auto-approve
 
 ```sh
 # fetch the model for local development
-aws s3 cp s3://toronto-shared-bike-ml-ud3m7h/trains/annual-demand-q80-2026-08-04-22-00-42-965/output/model.tar.gz
-# unzip
-tar -xzO model.joblib > app/lambda/model/model.joblib
+aws s3 cp s3://toronto-shared-bike-ml-ud3m7h/trains/annual-demand-q80-2026-08-04-22-00-42-965/output/model.tar.gz | tar -xzO model.joblib > app/lambda/model/model.joblib
 
 docker build -t shared-bike-ml-api app/lambda/
 docker run --rm -d --name shared-bike-ml-api  -p 8080:8080 bike-ml-api
