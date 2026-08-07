@@ -120,6 +120,13 @@ resource "aws_cloudfront_distribution" "this" {
     origin_request_policy_id = aws_cloudfront_origin_request_policy.api.id
   }
 
+  custom_error_response {
+    error_caching_min_ttl = 10
+    error_code            = 404
+    response_code         = 200           # Changes the browser status to 200
+    response_page_path    = "/error.html" # Path to your error HTML asset
+  }
+
   restrictions {
     geo_restriction {
       restriction_type = "none"
