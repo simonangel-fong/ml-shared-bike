@@ -55,8 +55,9 @@
             and serving a bike-demand forecasting model.
           </p>
           <div class="d-flex flex-column flex-sm-row gap-3 justify-content-center">
-            <a href="#forecast" class="btn btn-primary btn-lg px-4">Try the model</a>
-            <a href="#challenge" class="btn btn-outline-light btn-lg px-4">Learn more</a>
+            <a href="#forecast" class="btn btn-light btn-lg px-4">Try the model</a>
+            <a href="https://github.com/simonangel-fong/Project-Toronto-Shared-Bike-ML" target="_blank" rel="noopener"
+              class="btn btn-outline-light btn-lg px-4">GitHub Repository</a>
           </div>
         </div>
       </div>
@@ -68,19 +69,18 @@
     <div class="container">
       <div class="row justify-content-center">
         <div class="col-lg-9">
-          <p class="section-eyebrow">01 — Context</p>
-          <h2 class="section-title">Business Challenge</h2>
+          <h1 class="section-title">Business Challenge</h1>
 
-          <p class="lead text-secondary">
+          <p class="lead text-secondary fs-4">
             Machine learning turns historical data into insights for faster, data-driven decisions.
           </p>
 
           <p class="statement">
-            However, <em>integrating machine learning models reliably into business
+            <em>Integrating machine learning models reliably into business
               applications</em> remains a significant challenge.
           </p>
 
-          <p class="text-secondary mb-0">
+          <p class="text-secondary fs-4 mb-0">
             This project demonstrates an end-to-end MLOps workflow by training, deploying,
             and serving a bike-demand forecasting model.
           </p>
@@ -94,9 +94,8 @@
     <div class="container">
       <div class="row justify-content-center">
         <div class="col-lg-9 text-center mb-4">
-          <p class="section-eyebrow">02 — Live model</p>
-          <h2 class="section-title">Predict Trips per Station</h2>
-          <p class="text-secondary">
+          <h1 class="section-title">Predict Trips per Station</h1>
+          <p class="text-secondary fs-4">
             The deployed model, served from AWS Lambda behind API Gateway.
             Pick a station, a date, and an hour.
           </p>
@@ -145,8 +144,7 @@
 
       <div class="row justify-content-center">
         <div class="col-lg-9">
-          <p class="section-eyebrow">03 — Modelling</p>
-          <h2 class="section-title">Machine Learning</h2>
+          <h1 class="section-title">Machine Learning</h1>
         </div>
       </div>
 
@@ -155,34 +153,24 @@
         <div class="col-lg-9">
           <h3 class="h4 mb-3">Problem Definition</h3>
 
-          <div class="callout mb-4">
-            <p class="mb-0 fs-5">
-              Predict hourly bike rentals at the <strong>73 busiest stations</strong> for
-              annual members, whose demand is driven primarily by predictable weekday
-              commuting patterns.
-            </p>
-          </div>
+          <p class="statement fs-4">
+            Predict hourly bike rentals at the <strong>73 <em>busiest stations</em></strong> for
+            <em>annual members</em>, whose demand is driven primarily by predictable weekday
+            commuting patterns.
+          </p>
 
           <h4 class="h6 text-uppercase text-secondary mb-3" style="letter-spacing:.1em">Business impact</h4>
 
-          <div class="row g-3">
-            <div class="col-md-6">
-              <div class="card-flat h-100 p-4">
-                <h5 class="h6 text-primary mb-2">Operations team</h5>
-                <p class="small text-secondary mb-0">
-                  Anticipate demand and rebalance bikes before high-demand stations run out.
-                </p>
-              </div>
-            </div>
-            <div class="col-md-6">
-              <div class="card-flat h-100 p-4">
-                <h5 class="h6 text-primary mb-2">Annual members</h5>
-                <p class="small text-secondary mb-0">
-                  Improve bike availability and service reliability during regular commutes.
-                </p>
-              </div>
-            </div>
-          </div>
+          <ul class="impact-list text-secondary mb-0">
+            <li>
+              <strong class="text-primary fs-5">Operations team</strong>:
+              Anticipate demand and rebalance bikes before high-demand stations run out.
+            </li>
+            <li>
+              <strong class="text-primary fs-5">Annual members</strong>:
+              Improve bike availability and service reliability during regular commutes.
+            </li>
+          </ul>
         </div>
       </div>
 
@@ -191,93 +179,51 @@
         <div class="col-lg-9">
           <h3 class="h4 mb-3">MLOps Lifecycle</h3>
 
-          <div id="lifecycle" class="carousel slide lifecycle-carousel" data-bs-ride="false">
-            <div class="carousel-indicators">
-              <button type="button" data-bs-target="#lifecycle" data-bs-slide-to="0" class="active" aria-current="true"
-                aria-label="Data Collection and Preparation"></button>
-              <button type="button" data-bs-target="#lifecycle" data-bs-slide-to="1"
-                aria-label="Model Development"></button>
-              <button type="button" data-bs-target="#lifecycle" data-bs-slide-to="2"
-                aria-label="Training Pipeline with Amazon SageMaker"></button>
-            </div>
-
+          <div id="lifecycle" class="carousel slide" data-bs-ride="false">
             <div class="carousel-inner">
 
-              <!-- slide 1 -->
+              <!-- data -->
               <div class="carousel-item active">
-                <div class="lifecycle-slide">
-                  <p class="lifecycle-step mb-1">Step 1</p>
-                  <h4 class="h5 mb-3">Data Collection &amp; Preparation</h4>
-                  <p class="text-secondary">
-                    Built on the
-                    <a href="https://trip.arguswatcher.net/" class="link-primary" target="_blank" rel="noopener">Toronto
-                      Shared Bike Data Engineering project</a>,
-                    which provides the data warehouse and ETL pipeline. Trip data is exported
-                    from the warehouse and prepared for feature engineering and model training.
-                  </p>
-                  <figure class="figure-framed mb-0">
-                    <img src="img/ml_notebook01.png" alt="Jupyter Notebook showing local data preparation and training"
-                      loading="lazy">
-                  </figure>
+                <img src="img/carousel_data.png" class="d-block w-100" loading="lazy" alt="">
+                <div class="carousel-caption d-none d-md-block">
+                  <h5 class="text-white">Data Collection &amp; Preparation based on <a
+                      href="https://trip.arguswatcher.net/" class="text-reset" target="_blank" rel="noopener">
+                      Toronto Shared Bike Analysis</a>
+                  </h5>
                 </div>
               </div>
 
-              <!-- slide 2 -->
+              <!-- notebook -->
               <div class="carousel-item">
-                <div class="lifecycle-slide">
-                  <p class="lifecycle-step mb-1">Step 2</p>
-                  <h4 class="h5 mb-3">Model Development</h4>
-                  <p class="text-secondary">
-                    Models are developed and evaluated locally using <code>Jupyter Notebook</code>
-                    and <code>MLflow</code>, covering feature engineering, model selection,
-                    training, validation, and experiment tracking.
-                  </p>
-                  <div class="row g-3">
-                    <div class="col-md-6">
-                      <figure class="figure-framed mb-0 h-100">
-                        <img src="img/ml_mlflow_hyperparameter02.png" alt="MLflow experiment runs" loading="lazy">
-                      </figure>
-                      <p class="figure-caption-sm">MLflow: runs</p>
-                    </div>
-                    <div class="col-md-6">
-                      <figure class="figure-framed mb-0 h-100">
-                        <img src="img/ml_mlflow_hyperparameter01.png" alt="MLflow hyperparameter training results"
-                          loading="lazy">
-                      </figure>
-                      <p class="figure-caption-sm">MLflow: hyperparameter training</p>
-                    </div>
-                  </div>
+                <img src="img/carousel_notebook.png" class="d-block w-100" alt="" loading="lazy">
+                <div class="carousel-caption d-none d-md-block">
+                  <h5 class="text-white">Model Development using <code>Jupyter Notebook</code></h5>
                 </div>
               </div>
 
-              <!-- slide 3 -->
+              <!-- mlflow -->
               <div class="carousel-item">
-                <div class="lifecycle-slide">
-                  <p class="lifecycle-step mb-1">Step 3</p>
-                  <h4 class="h5 mb-3">Training Pipeline with Amazon SageMaker</h4>
-                  <p class="text-secondary">
-                    <code>GitHub Actions</code> automates the training job, which runs as an
-                    <code>Amazon SageMaker</code> training job and publishes the resulting model artifact.
-                  </p>
-                  <div class="row g-3">
-                    <div class="col-md-6">
-                      <figure class="figure-framed mb-0 h-100">
-                        <img src="img/mlops_github01.png" alt="GitHub Actions automated training workflow"
-                          loading="lazy">
-                      </figure>
-                      <p class="figure-caption-sm">GitHub Actions: automated training job</p>
-                    </div>
-                    <div class="col-md-6">
-                      <figure class="figure-framed mb-0 h-100">
-                        <img src="img/sagemaker_training_job01.png" alt="Amazon SageMaker training jobs console"
-                          loading="lazy">
-                      </figure>
-                      <p class="figure-caption-sm">Amazon SageMaker: training jobs</p>
-                    </div>
-                  </div>
+                <img src="img/carousel_mlflow.png" class="d-block w-100" alt="" loading="lazy">
+                <div class="carousel-caption d-none d-md-block">
+                  <h5 class="text-white">Model tracking with <code>MLflow</code></h5>
                 </div>
               </div>
 
+              <!-- train -->
+              <div class="carousel-item">
+                <img src="img/carousel_sagemaker.png" class="d-block w-100" alt="" loading="lazy">
+                <div class="carousel-caption d-none d-md-block">
+                  <h5 class="text-white">Model Training with <code>Amazon SageMaker</code></h5>
+                </div>
+              </div>
+
+              <!-- pipeline -->
+              <div class="carousel-item">
+                <img src="img/carousel_pipeline.png" class="d-block w-100" alt="" loading="lazy">
+                <div class="carousel-caption d-none d-md-block">
+                  <h5 class="text-white">MLOps Pipeline automated by <code>GitHub Actions</code></h5>
+                </div>
+              </div>
             </div>
 
             <button class="carousel-control-prev" type="button" data-bs-target="#lifecycle" data-bs-slide="prev">

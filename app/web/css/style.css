@@ -6,7 +6,7 @@
   --brand-dim: #1c7ed6;
   --surface: #14161a;
   --surface-2: #1a1d23;
-  --hairline: rgba(255, 255, 255, .09);
+  --hairline: rgba(255, 255, 255, 0.09);
 }
 
 body {
@@ -22,14 +22,14 @@ section[id] {
 /* ---------- navbar ---------- */
 
 .navbar {
-  background-color: rgba(13, 15, 18, .82);
+  background-color: rgba(13, 15, 18, 0.82);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--hairline);
 }
 
 .navbar-brand {
   font-weight: 700;
-  letter-spacing: -.02em;
+  letter-spacing: -0.02em;
 }
 
 .navbar-brand .brand-mark {
@@ -37,7 +37,7 @@ section[id] {
   height: auto;
   /* The render carries its own soft shadow, which muddies against the dark
      navbar; a small drop-shadow re-seats it instead. */
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .6));
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.6));
 }
 
 /* ---------- hero ---------- */
@@ -59,7 +59,12 @@ section[id] {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(13, 15, 18, .78) 0%, rgba(13, 15, 18, .68) 45%, rgba(13, 15, 18, .95) 100%);
+  background: linear-gradient(
+    180deg,
+    rgba(13, 15, 18, 0.78) 0%,
+    rgba(13, 15, 18, 0.68) 45%,
+    rgba(13, 15, 18, 0.95) 100%
+  );
 }
 
 .hero > .container {
@@ -70,12 +75,12 @@ section[id] {
 .hero-logo {
   width: clamp(110px, 16vw, 170px);
   height: auto;
-  filter: drop-shadow(0 6px 18px rgba(0, 0, 0, .55));
+  filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.55));
 }
 
 .hero-title {
   font-weight: 800;
-  letter-spacing: -.03em;
+  letter-spacing: -0.03em;
   font-size: clamp(2.25rem, 6vw, 4rem);
   line-height: 1.05;
 }
@@ -83,14 +88,14 @@ section[id] {
 .hero-subtitle {
   color: var(--brand);
   font-weight: 600;
-  letter-spacing: .12em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   font-size: 1rem;
 }
 
 .hero-lead {
-  font-size: clamp(1rem, 2.2vw, 1.2rem);
-  color: rgba(255, 255, 255, .78);
+  font-size: clamp(1.5rem, 2.2vw, 1.2rem);
+  color: rgba(255, 255, 255, 0.78);
   max-width: 46rem;
 }
 
@@ -116,15 +121,15 @@ section[id] {
 .section-eyebrow {
   color: var(--brand);
   font-weight: 600;
-  letter-spacing: .12em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  font-size: .75rem;
-  margin-bottom: .5rem;
+  font-size: 0.75rem;
+  margin-bottom: 0.5rem;
 }
 
 .section-title {
   font-weight: 700;
-  letter-spacing: -.02em;
+  letter-spacing: -0.02em;
   margin-bottom: 1.5rem;
 }
 
@@ -135,7 +140,7 @@ section[id] {
   line-height: 1.4;
   color: #fff;
   border-left: 3px solid var(--brand);
-  padding: .25rem 0 .25rem 1.25rem;
+  padding: 0.25rem 0 0.25rem 1.25rem;
   margin: 1.75rem 0;
 }
 
@@ -148,36 +153,36 @@ section[id] {
   background-color: var(--surface-2);
   border: 1px solid var(--hairline);
   border-left: 3px solid var(--brand);
-  border-radius: .5rem;
+  border-radius: 0.5rem;
   padding: 1.25rem 1.5rem;
 }
 
 .card-flat {
   background-color: var(--surface-2);
   border: 1px solid var(--hairline);
-  border-radius: .75rem;
+  border-radius: 0.75rem;
 }
 
 /* Screenshots are dense; a frame keeps them from bleeding into the page. */
 .figure-framed {
   background-color: var(--surface-2);
   border: 1px solid var(--hairline);
-  border-radius: .75rem;
-  padding: .5rem;
+  border-radius: 0.75rem;
+  padding: 0.5rem;
   overflow: hidden;
 }
 
 .figure-framed img {
   width: 100%;
   height: auto;
-  border-radius: .5rem;
+  border-radius: 0.5rem;
   display: block;
 }
 
 .figure-caption-sm {
   color: #9aa4b2;
-  font-size: .8rem;
-  margin: .75rem .25rem 0;
+  font-size: 0.8rem;
+  margin: 0.75rem 0.25rem 0;
 }
 
 /* ---------- forecast widget ---------- */
@@ -201,72 +206,164 @@ section[id] {
   font-size: clamp(3rem, 9vw, 4.5rem);
   font-weight: 800;
   line-height: 1;
-  letter-spacing: -.04em;
+  letter-spacing: -0.04em;
   color: var(--brand);
 }
 
 .forecast-unit {
   color: #9aa4b2;
-  font-size: .9rem;
-  margin-top: .5rem;
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
 }
 
 .forecast-placeholder {
   color: #6b7480;
-  font-size: .9rem;
+  font-size: 0.9rem;
+}
+
+/* ---------- business impact bullets ---------- */
+
+.impact-list {
+  padding-left: 1.25rem;
+  font-size: 1.125rem;
+}
+
+.impact-list li {
+  margin-bottom: 0.75rem;
+}
+
+.impact-list li:last-child {
+  margin-bottom: 0;
+}
+
+.impact-list li::marker {
+  color: var(--brand);
 }
 
 /* ---------- lifecycle carousel ---------- */
 
-.lifecycle-carousel {
-  background-color: var(--surface-2);
-  border: 1px solid var(--hairline);
-  border-radius: .75rem;
-  overflow: hidden;
+#lifecycle .carousel-item {
+  position: relative;
 }
 
-/* Bottom padding clears the indicators, which are positioned over the slide. */
-.lifecycle-slide {
-  padding: 2rem 3.5rem 4.25rem;
+#lifecycle .carousel-item img {
+  border-radius: 0.5rem;
 }
 
-.lifecycle-step {
-  color: var(--brand);
-  font-weight: 600;
-  letter-spacing: .1em;
-  text-transform: uppercase;
-  font-size: .75rem;
+/* The screenshots run from near-black (pipeline) to near-white (notebook), so
+   no single text colour is legible over all five. A light scrim fades in over
+   the lower third and gives the caption a consistent surface to sit on,
+   whatever the image behind it. */
+#lifecycle .carousel-item::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 55%;
+  border-radius: 0 0 0.5rem 0.5rem;
+  background: linear-gradient(
+    180deg,
+    rgba(20, 20, 20, 0) 0%,
+    rgba(20, 20, 20, 0.75) 38%,
+    rgba(20, 20, 20, 0.96) 70%,
+    rgb(20, 20, 20) 100%
+  );
+  pointer-events: none;
 }
 
-/* Bootstrap's default arrows vanish against dark screenshots. */
-.lifecycle-carousel .carousel-control-prev,
-.lifecycle-carousel .carousel-control-next {
-  width: 3rem;
-  opacity: .65;
+/* Caption sits above the scrim, in dark ink to match it. */
+#lifecycle .carousel-caption {
+  z-index: 2;
+  right: 8%;
+  left: 8%;
+  bottom: 1.25rem;
+  padding: 0;
+  text-align: center;
+  color: #16181b;
+  text-shadow: none;
 }
 
-.lifecycle-carousel .carousel-control-prev:hover,
-.lifecycle-carousel .carousel-control-next:hover {
-  opacity: 1;
+#lifecycle .carousel-caption h5 {
+  color: #16181b;
+  font-weight: 700;
 }
 
-.lifecycle-carousel .carousel-indicators {
-  margin-bottom: .75rem;
+/* .text-secondary is tuned for the dark page and washes out on the light
+   scrim; the caption needs its own muted tone. */
+#lifecycle .carousel-caption p,
+#lifecycle .carousel-caption .text-secondary {
+  color: #40464d !important;
+  margin-bottom: 0;
 }
 
-.lifecycle-carousel .carousel-indicators [data-bs-target] {
-  width: 2rem;
-  height: 3px;
-  background-color: #6b7480;
+#lifecycle .carousel-caption code {
+  color: #a5305c;
+  background-color: rgba(0, 0, 0, 0.06);
+  padding: 0.1em 0.35em;
+  border-radius: 0.25rem;
 }
 
-.lifecycle-carousel .carousel-indicators .active {
-  background-color: var(--brand);
+#lifecycle .carousel-caption a,
+#lifecycle .carousel-caption .link-primary {
+  color: #0b5ed7 !important;
+  text-decoration: underline;
 }
 
-@media (max-width: 575.98px) {
-  .lifecycle-slide {
-    padding: 1.5rem 1.25rem 3.25rem;
+/* Indicators sit inside the light scrim, so they need to be dark. */
+#lifecycle .carousel-indicators [data-bs-target] {
+  background-color: #16181b;
+}
+
+/* The arrows span the full frame height, crossing both the dark image and the
+   light scrim, so neither a white nor a dark icon works alone. A translucent
+   dark puck travels with the icon and keeps it readable over either. */
+#lifecycle .carousel-control-prev-icon,
+#lifecycle .carousel-control-next-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  background-color: rgba(22, 24, 27, 0.55);
+  background-size: 1.1rem 1.1rem;
+  border-radius: 50%;
+}
+
+#lifecycle .carousel-control-prev:hover .carousel-control-prev-icon,
+#lifecycle .carousel-control-next:hover .carousel-control-next-icon {
+  background-color: rgba(22, 24, 27, 0.8);
+}
+
+/* Below md Bootstrap hides the caption entirely (d-none d-md-block). The
+   screenshots are unreadable at that width anyway, so the caption carries the
+   slide - drop the overlay and let it sit under the image instead. */
+@media (max-width: 767.98px) {
+  #lifecycle .carousel-item::after {
+    display: none;
+  }
+
+  #lifecycle .carousel-caption {
+    position: static;
+    display: block !important;
+    padding: 0.875rem 0.25rem 2.5rem;
+    color: #adb5bd;
+  }
+
+  #lifecycle .carousel-caption h5 {
+    color: #f1f3f5;
+    font-size: 1rem;
+  }
+
+  #lifecycle .carousel-caption p,
+  #lifecycle .carousel-caption .text-secondary {
+    color: #adb5bd !important;
+    font-size: 0.875rem;
+  }
+
+  #lifecycle .carousel-caption code {
+    color: #ff8fab;
+    background-color: rgba(255, 255, 255, 0.08);
+  }
+
+  #lifecycle .carousel-caption a,
+  #lifecycle .carousel-caption .link-primary {
+    color: var(--brand) !important;
   }
 }
 
@@ -274,8 +371,8 @@ section[id] {
 
 .role-item {
   display: flex;
-  gap: .875rem;
-  padding: .875rem 0;
+  gap: 0.875rem;
+  padding: 0.875rem 0;
   border-bottom: 1px solid var(--hairline);
 }
 
@@ -296,7 +393,7 @@ section[id] {
   border-top: 1px solid var(--hairline);
   padding: 2.5rem 0;
   color: #9aa4b2;
-  font-size: .875rem;
+  font-size: 0.875rem;
 }
 
 .site-footer a {
@@ -322,15 +419,15 @@ section[id] {
 .error-code {
   font-size: clamp(4rem, 14vw, 7rem);
   font-weight: 800;
-  letter-spacing: -.05em;
+  letter-spacing: -0.05em;
   color: var(--brand);
   line-height: 1;
 }
 
 @media (prefers-reduced-motion: reduce) {
   * {
-    animation-duration: .01ms !important;
-    transition-duration: .01ms !important;
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
 }
