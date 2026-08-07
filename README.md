@@ -31,7 +31,7 @@ This project demonstrates an end-to-end `MLOps` workflow by training, deploying,
 
 ## Architecture
 
-![architecture01](./docs/img/architecture01.png)
+![infra_architecture](./docs/img/infra_architecture.gif)
 
 ---
 
