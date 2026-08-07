@@ -246,27 +246,29 @@
     <div class="container">
       <div class="row justify-content-center">
         <div class="col-lg-9">
-          <p class="section-eyebrow">04 — Delivery</p>
-          <h2 class="section-title">Application Deployment</h2>
+          <h1 class="section-title">Application Deployment</h1>
 
-          <p class="text-secondary">
+          <p class="text-secondary fs-5">
             Deployment is automated with <code>GitHub Actions</code> workflows, triggered when
-            code is updated or a model training job completes. The trained model is served on AWS:
-            <code>Lambda</code> for serverless inference, <code>API Gateway</code> as the entry
-            point, <code>S3</code> for the frontend, <code>CloudFront</code> for caching, and
-            <code>Cloudflare</code> for DNS.
-          </p>
-
-          <figure class="figure-framed mt-4 mb-0">
-            <img src="img/deploy01.png" alt="AWS serving architecture: CloudFront, S3, API Gateway, and Lambda"
-              loading="lazy">
-          </figure>
-          <p class="figure-caption-sm">Serving architecture on AWS</p>
-
-          <figure class="figure-framed mt-4 mb-0">
-            <img src="img/deploy02.png" alt="GitHub Actions deployment workflow run" loading="lazy">
-          </figure>
-          <p class="figure-caption-sm">GitHub Actions: automated deployment</p>
+            code is updated or a model training job completes. </p>
+          <p>The trained model is served on AWS: </p>
+          <ul class="impact-list text-secondary mb-0">
+            <li>
+              <code>Lambda</code> for serverless inference
+            </li>
+            <li>
+              <code>API Gateway</code> as the entry point
+            </li>
+            <li>
+              <code>S3</code> for the frontend
+            </li>
+            <li>
+              <code>CloudFront</code> for caching
+            </li>
+            <li>
+              <code>Cloudflare</code> for DNS
+            </li>
+          </ul>
         </div>
       </div>
     </div>
@@ -277,42 +279,40 @@
     <div class="container">
       <div class="row justify-content-center">
         <div class="col-lg-9">
-          <p class="section-eyebrow">05 — Takeaway</p>
           <h2 class="section-title">Ownership Across Roles</h2>
 
-          <p class="text-secondary mb-4">
+          <p class="text-secondary fs-5 mb-4">
             A successful ML application requires clear ownership across multiple roles:
           </p>
 
-          <div class="card-flat p-4 p-md-5 mb-4">
-            <div class="role-item">
-              <span class="role-name">Data Engineer</span>
-              <span class="text-secondary">Builds dependable data sources and ETL pipelines.</span>
-            </div>
-            <div class="role-item">
-              <span class="role-name">Data Scientist</span>
-              <span class="text-secondary">Converts business problems into validated models and insights.</span>
-            </div>
-            <div class="role-item">
-              <span class="role-name">ML Engineer</span>
-              <span class="text-secondary">Integrates models into production applications.</span>
-            </div>
-            <div class="role-item">
-              <span class="role-name">MLOps Engineer</span>
-              <span class="text-secondary">Automates training, deployment, monitoring, and integration across the ML
-                lifecycle.</span>
-            </div>
-          </div>
+          <ul class="impact-list text-secondary mb-0">
+            <li>
+              <span class="role-name">Data Engineer</span> Builds dependable data sources and ETL pipelines.
+            </li>
+            <li>
+              <span class="role-name">Data Scientist</span> Converts business problems into validated models and
+              insights.
+            </li>
+            <li>
+              <span class="role-name">ML Engineer</span> Integrates models into production applications.
+            </li>
+            <li>
+              <span class="role-name">MLOps Engineer</span> Automates training, deployment, monitoring, and integration
+              across the ML
+              lifecycle.
+            </li>
 
-          <figure class="figure-framed mb-0">
-            <img src="img/ownership01.png" alt="Diagram of ownership across data, ML, and MLOps roles" loading="lazy">
-          </figure>
-          <p class="figure-caption-sm mb-4">Ownership across the ML lifecycle</p>
+          </ul>
 
           <p class="statement">
             Clear ownership improves delivery, while <em>MLOps connects each component</em>
             into a reliable, repeatable production system.
           </p>
+
+          <figure class="figure-framed mb-0">
+            <img src="img/ownership01.png" alt="Diagram of ownership across data, ML, and MLOps roles" loading="lazy">
+          </figure>
+          <p class="figure-caption-sm mb-4">Ownership across the ML lifecycle</p>
         </div>
       </div>
     </div>
@@ -323,8 +323,7 @@
     <div class="container">
       <div class="row gy-3 align-items-center">
         <div class="col-md-6">
-          <strong class="d-block text-body">Toronto Shared Bike MLOps</strong>
-          <span>End-to-end MLOps: training, deployment, and inference.</span>
+          <strong class="d-block text-body">Arguswatcher</strong>@2026
         </div>
         <div class="col-md-6 text-md-end">
           <a href="https://trip.arguswatcher.net/" target="_blank" rel="noopener" class="me-3">Data Engineering
@@ -335,8 +334,11 @@
     </div>
   </footer>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
-    integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
+    integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r"
+    crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.min.js"
+    integrity="sha384-G/EV+4j2dNv+tEPo3++6LCgdCROaejBqfUeNjuKAiuXbjrxilcCdDz6ZAVfHWe1Y"
     crossorigin="anonymous"></script>
   <script src="js/main.js"></script>
 </body>
