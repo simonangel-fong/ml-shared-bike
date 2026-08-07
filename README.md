@@ -13,7 +13,6 @@ A project demonstrates an end-to-end `MLOps` workflow by training, deploying, an
     - [Model Development \& Training \& Validation](#model-development--training--validation)
     - [Training Pipeline with `Amazon Sagemaker`](#training-pipeline-with-amazon-sagemaker)
   - [Application Deployment](#application-deployment)
-  - [Monitoring](#monitoring)
   - [Takeway](#takeway)
   - [Roadmap](#roadmap)
   - [Documentation](#documentation)
@@ -87,6 +86,13 @@ Models are developed and evaluated locally using `Jupyter Notebook` and `MLflow`
 
 ## Application Deployment
 
+- Automate deployment with `GitHub Actions` workflows
+  - Triggered when code is updated and/or completed model training jobs
+  - Build and push Docker image
+  - Update application in AWS.
+
+  ![deploy02](./docs/img/deploy02.png)
+
 - Serve trained model with AWS:
   - `Lambda`(Docker Image): serverless inference
   - `API Gateway`(HTTP): entry point for service with low cost
@@ -94,24 +100,18 @@ Models are developed and evaluated locally using `Jupyter Notebook` and `MLflow`
   - `CloudFront`: cached for performance
   - `Cloudflare`: DNS
 
-![deploy01](./docs/img/deploy01.png)
-
-- Automate deployment with `GitHub Actions` workflows
-  - Triggered when code is updated and/or completed model training jobs
-  - Build and push Docker image
-  - Update application in AWS.
-
-![deploy02](./docs/img/deploy02.png)
+  ![deploy01](./docs/img/deploy01.png)
 
 ---
 
+<!--
 ## Monitoring
 
 - Monitor resources with `Cloudwatch`
 
 - Visualize with `Grafana Cloud`
 
----
+--- -->
 
 ## Takeway
 

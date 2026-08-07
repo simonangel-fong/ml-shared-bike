@@ -1,8 +1,8 @@
-# Data Engineering: Data Warehouse (Spark)
+# Toronto Shared Bike MLOps Project - Data Warehouse (Spark)
 
 [Back](../README.md)
 
-- [Data Engineering: Data Warehouse (Spark)](#data-engineering-data-warehouse-spark)
+- [Toronto Shared Bike MLOps Project - Data Warehouse (Spark)](#toronto-shared-bike-mlops-project---data-warehouse-spark)
   - [Data Warehouse Design](#data-warehouse-design)
   - [Development](#development)
     - [Download raw data](#download-raw-data)

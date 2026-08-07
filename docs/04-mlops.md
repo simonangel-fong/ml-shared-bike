@@ -1,8 +1,8 @@
-# MLOps
+# Toronto Shared Bike MLOps Project - MLOps
 
 [Back](../README.md)
 
-- [MLOps](#mlops)
+- [Toronto Shared Bike MLOps Project - MLOps](#toronto-shared-bike-mlops-project---mlops)
   - [Goal](#goal)
   - [Pipeline](#pipeline)
   - [Files](#files)

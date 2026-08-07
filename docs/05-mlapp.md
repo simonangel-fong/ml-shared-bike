@@ -1,8 +1,8 @@
-# ML Application
+# Toronto Shared Bike MLOps Project - Application Deployment
 
 [Back](../README.md)
 
-- [ML Application](#ml-application)
+- [Toronto Shared Bike MLOps Project - Application Deployment](#toronto-shared-bike-mlops-project---application-deployment)
   - [ML application Deployment Design](#ml-application-deployment-design)
     - [Lambda vs. SageMaker endpoint](#lambda-vs-sagemaker-endpoint)
     - [Routing](#routing)

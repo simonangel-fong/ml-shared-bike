@@ -37,12 +37,23 @@ jobs:
       - name: Upload
         run: |
           key=$(aws kms describe-key --key-id "alias/$KMS_ALIAS" --query 'KeyMetadata.Arn' --output text)
+
+          # Two passes. --content-type applies to every object in a sync, so the
+          # html needs its own run; the assets keep the content types the cli
+          # guesses, which a browser will refuse to honour if they say text/html.
+          # --delete only on the second pass, so the first does not remove the
+          # assets before the second re-uploads them.
           aws s3 sync app/web/ "s3://$BUCKET/web/" \
-            --delete \
             --sse aws:kms \
             --sse-kms-key-id "$key" \
             --content-type "text/html; charset=utf-8" \
             --exclude "*" --include "*.html"
+
+          aws s3 sync app/web/ "s3://$BUCKET/web/" \
+            --delete \
+            --sse aws:kms \
+            --sse-kms-key-id "$key" \
+            --exclude "*.html"
 
       - name: Invalidate to remove outdate web files from cloudfront
         run: |

@@ -1,0 +1,336 @@
+/* Toronto Shared Bike MLOps - site styles
+   Layered on Bootstrap 5 dark theme (data-bs-theme="dark"). */
+
+:root {
+  --brand: #4dabf7;
+  --brand-dim: #1c7ed6;
+  --surface: #14161a;
+  --surface-2: #1a1d23;
+  --hairline: rgba(255, 255, 255, .09);
+}
+
+body {
+  background-color: #0d0f12;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Anchored sections sit below the fixed navbar when jumped to. */
+section[id] {
+  scroll-margin-top: 4.5rem;
+}
+
+/* ---------- navbar ---------- */
+
+.navbar {
+  background-color: rgba(13, 15, 18, .82);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.navbar-brand {
+  font-weight: 700;
+  letter-spacing: -.02em;
+}
+
+.navbar-brand .brand-mark {
+  width: 32px;
+  height: auto;
+  /* The render carries its own soft shadow, which muddies against the dark
+     navbar; a small drop-shadow re-seats it instead. */
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .6));
+}
+
+/* ---------- hero ---------- */
+
+.hero {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 88vh;
+  padding: 7rem 0 5rem;
+  background-image: url("../img/bg-image.jpg");
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+}
+
+/* Scrim: the photo is busy, and the headline has to stay readable over it. */
+.hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(13, 15, 18, .78) 0%, rgba(13, 15, 18, .68) 45%, rgba(13, 15, 18, .95) 100%);
+}
+
+.hero > .container {
+  position: relative;
+  z-index: 1;
+}
+
+.hero-logo {
+  width: clamp(110px, 16vw, 170px);
+  height: auto;
+  filter: drop-shadow(0 6px 18px rgba(0, 0, 0, .55));
+}
+
+.hero-title {
+  font-weight: 800;
+  letter-spacing: -.03em;
+  font-size: clamp(2.25rem, 6vw, 4rem);
+  line-height: 1.05;
+}
+
+.hero-subtitle {
+  color: var(--brand);
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  font-size: 1rem;
+}
+
+.hero-lead {
+  font-size: clamp(1rem, 2.2vw, 1.2rem);
+  color: rgba(255, 255, 255, .78);
+  max-width: 46rem;
+}
+
+/* background-attachment: fixed janks badly on iOS/Android; drop it there. */
+@media (hover: none), (max-width: 767.98px) {
+  .hero {
+    background-attachment: scroll;
+  }
+}
+
+/* ---------- generic section furniture ---------- */
+
+.section {
+  padding: 5rem 0;
+}
+
+.section-alt {
+  background-color: var(--surface);
+  border-top: 1px solid var(--hairline);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.section-eyebrow {
+  color: var(--brand);
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  font-size: .75rem;
+  margin-bottom: .5rem;
+}
+
+.section-title {
+  font-weight: 700;
+  letter-spacing: -.02em;
+  margin-bottom: 1.5rem;
+}
+
+/* The one sentence the challenge section exists to land. */
+.statement {
+  font-size: clamp(1.25rem, 3.2vw, 1.75rem);
+  font-weight: 600;
+  line-height: 1.4;
+  color: #fff;
+  border-left: 3px solid var(--brand);
+  padding: .25rem 0 .25rem 1.25rem;
+  margin: 1.75rem 0;
+}
+
+.statement em {
+  font-style: normal;
+  color: var(--brand);
+}
+
+.callout {
+  background-color: var(--surface-2);
+  border: 1px solid var(--hairline);
+  border-left: 3px solid var(--brand);
+  border-radius: .5rem;
+  padding: 1.25rem 1.5rem;
+}
+
+.card-flat {
+  background-color: var(--surface-2);
+  border: 1px solid var(--hairline);
+  border-radius: .75rem;
+}
+
+/* Screenshots are dense; a frame keeps them from bleeding into the page. */
+.figure-framed {
+  background-color: var(--surface-2);
+  border: 1px solid var(--hairline);
+  border-radius: .75rem;
+  padding: .5rem;
+  overflow: hidden;
+}
+
+.figure-framed img {
+  width: 100%;
+  height: auto;
+  border-radius: .5rem;
+  display: block;
+}
+
+.figure-caption-sm {
+  color: #9aa4b2;
+  font-size: .8rem;
+  margin: .75rem .25rem 0;
+}
+
+/* ---------- forecast widget ---------- */
+
+.forecast-card {
+  background-color: var(--surface-2);
+  border: 1px solid var(--hairline);
+  border-radius: 1rem;
+}
+
+.forecast-readout {
+  min-height: 8.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.forecast-value {
+  font-size: clamp(3rem, 9vw, 4.5rem);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -.04em;
+  color: var(--brand);
+}
+
+.forecast-unit {
+  color: #9aa4b2;
+  font-size: .9rem;
+  margin-top: .5rem;
+}
+
+.forecast-placeholder {
+  color: #6b7480;
+  font-size: .9rem;
+}
+
+/* ---------- lifecycle carousel ---------- */
+
+.lifecycle-carousel {
+  background-color: var(--surface-2);
+  border: 1px solid var(--hairline);
+  border-radius: .75rem;
+  overflow: hidden;
+}
+
+/* Bottom padding clears the indicators, which are positioned over the slide. */
+.lifecycle-slide {
+  padding: 2rem 3.5rem 4.25rem;
+}
+
+.lifecycle-step {
+  color: var(--brand);
+  font-weight: 600;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  font-size: .75rem;
+}
+
+/* Bootstrap's default arrows vanish against dark screenshots. */
+.lifecycle-carousel .carousel-control-prev,
+.lifecycle-carousel .carousel-control-next {
+  width: 3rem;
+  opacity: .65;
+}
+
+.lifecycle-carousel .carousel-control-prev:hover,
+.lifecycle-carousel .carousel-control-next:hover {
+  opacity: 1;
+}
+
+.lifecycle-carousel .carousel-indicators {
+  margin-bottom: .75rem;
+}
+
+.lifecycle-carousel .carousel-indicators [data-bs-target] {
+  width: 2rem;
+  height: 3px;
+  background-color: #6b7480;
+}
+
+.lifecycle-carousel .carousel-indicators .active {
+  background-color: var(--brand);
+}
+
+@media (max-width: 575.98px) {
+  .lifecycle-slide {
+    padding: 1.5rem 1.25rem 3.25rem;
+  }
+}
+
+/* ---------- roles / takeaway ---------- */
+
+.role-item {
+  display: flex;
+  gap: .875rem;
+  padding: .875rem 0;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.role-item:last-child {
+  border-bottom: 0;
+}
+
+.role-name {
+  color: var(--brand);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* ---------- footer ---------- */
+
+.site-footer {
+  background-color: var(--surface);
+  border-top: 1px solid var(--hairline);
+  padding: 2.5rem 0;
+  color: #9aa4b2;
+  font-size: .875rem;
+}
+
+.site-footer a {
+  color: #9aa4b2;
+  text-decoration: none;
+}
+
+.site-footer a:hover {
+  color: var(--brand);
+}
+
+/* ---------- error page ---------- */
+
+.error-wrap {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 2rem 1rem;
+}
+
+.error-code {
+  font-size: clamp(4rem, 14vw, 7rem);
+  font-weight: 800;
+  letter-spacing: -.05em;
+  color: var(--brand);
+  line-height: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: .01ms !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

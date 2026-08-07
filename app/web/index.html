@@ -1,251 +1,398 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-bs-theme="dark">
 
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Toronto Bike Share - Demand Forecast</title>
-  <style>
-    :root {
-      --fg: #1a1a1a;
-      --muted: #6b7280;
-      --line: #e5e7eb;
-      --accent: #2563eb;
-      --bg: #fff;
-    }
+  <title>Toronto Shared Bike MLOps</title>
+  <meta name="description"
+    content="An end-to-end MLOps workflow: training, deploying, and serving a bike-demand forecasting model on AWS.">
 
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --fg: #e8e8e8;
-        --muted: #9ca3af;
-        --line: #374151;
-        --accent: #60a5fa;
-        --bg: #111827;
-      }
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      padding: 2rem 1rem;
-      font: 16px/1.5 system-ui, -apple-system, sans-serif;
-      color: var(--fg);
-      background: var(--bg);
-    }
-
-    main {
-      max-width: 32rem;
-      margin: 0 auto;
-    }
-
-    h1 {
-      font-size: 1.4rem;
-      margin: 0 0 .25rem;
-    }
-
-    .sub {
-      color: var(--muted);
-      font-size: .875rem;
-      margin: 0 0 1.75rem;
-    }
-
-    .row {
-      display: flex;
-      gap: .75rem;
-      flex-wrap: wrap;
-      margin-bottom: 1rem;
-    }
-
-    .field {
-      flex: 1 1 8rem;
-    }
-
-    label {
-      display: block;
-      font-size: .8rem;
-      color: var(--muted);
-      margin-bottom: .25rem;
-    }
-
-    select,
-    input {
-      width: 100%;
-      padding: .5rem;
-      font: inherit;
-      color: var(--fg);
-      background: var(--bg);
-      border: 1px solid var(--line);
-      border-radius: .375rem;
-    }
-
-    button {
-      width: 100%;
-      padding: .625rem;
-      font: inherit;
-      font-weight: 600;
-      color: #fff;
-      background: var(--accent);
-      border: 0;
-      border-radius: .375rem;
-      cursor: pointer;
-    }
-
-    button:disabled {
-      opacity: .5;
-      cursor: default;
-    }
-
-    #out {
-      margin-top: 1.5rem;
-      text-align: center;
-      min-height: 5rem;
-    }
-
-    .value {
-      font-size: 3rem;
-      font-weight: 700;
-      line-height: 1.1;
-    }
-
-    .unit {
-      color: var(--muted);
-      font-size: .875rem;
-    }
-
-    .error {
-      color: #dc2626;
-      font-size: .875rem;
-    }
-
-    @media (prefers-color-scheme: dark) {
-      .error {
-        color: #f87171;
-      }
-    }
-
-    footer {
-      margin-top: 2rem;
-      padding-top: 1rem;
-      border-top: 1px solid var(--line);
-      color: var(--muted);
-      font-size: .75rem;
-    }
-  </style>
+  <link rel="icon" type="image/png" href="img/logo-bike-32.png">
+  <link rel="apple-touch-icon" href="img/logo-bike.png">
+  <link rel="preload" as="image" href="img/bg-image.jpg">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+  <link rel="stylesheet" href="css/style.css">
 </head>
 
 <body>
-  <main>
-    <h1>Bike Share Demand Forecast</h1>
-    <p class="sub">Expected trips departing a station in a given hour.</p>
 
-    <div class="row">
-      <div class="field">
-        <label for="station">Station</label>
-        <select id="station">
-          <option>loading…</option>
-        </select>
+  <!-- ===== navbar ===== -->
+  <nav class="navbar navbar-expand-lg fixed-top">
+    <div class="container">
+      <a class="navbar-brand d-flex align-items-center gap-2" href="https://trip-ml.arguswatcher.net">
+        <img src="img/logo-bike-32.png" alt="" class="brand-mark" width="32" height="30">
+        <span>Toronto Shared Bike</span>
+      </a>
+
+      <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#nav"
+        aria-controls="nav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse justify-content-end" id="nav">
+        <ul class="navbar-nav gap-lg-2">
+          <li class="nav-item"><a class="nav-link" href="#challenge">Challenge</a></li>
+          <li class="nav-item"><a class="nav-link" href="#forecast">Forecast</a></li>
+          <li class="nav-item"><a class="nav-link" href="#ml">Machine Learning</a></li>
+          <li class="nav-item"><a class="nav-link" href="#deployment">Deployment</a></li>
+          <li class="nav-item"><a class="nav-link" href="#takeaway">Takeaway</a></li>
+        </ul>
       </div>
     </div>
+  </nav>
 
-    <div class="row">
-      <div class="field">
-        <label for="date">Date</label>
-        <input type="date" id="date">
-      </div>
-      <div class="field">
-        <label for="hour">Hour</label>
-        <select id="hour"></select>
+  <!-- ===== hero ===== -->
+  <header class="hero">
+    <div class="container">
+      <div class="row justify-content-center text-center">
+        <div class="col-12 col-sm-10">
+          <h3 class="hero-title mb-4">Toronto Shared Bike MLOps</h3>
+          <p class="hero-subtitle mb-3">End-to-end MLOps workflow</p>
+          <p class="hero-lead mx-auto mb-5">
+            A project demonstrating an end-to-end MLOps workflow by training, deploying,
+            and serving a bike-demand forecasting model.
+          </p>
+          <div class="d-flex flex-column flex-sm-row gap-3 justify-content-center">
+            <a href="#forecast" class="btn btn-primary btn-lg px-4">Try the model</a>
+            <a href="#challenge" class="btn btn-outline-light btn-lg px-4">Learn more</a>
+          </div>
+        </div>
       </div>
     </div>
+  </header>
 
-    <button id="go" disabled>Forecast</button>
+  <!-- ===== challenge ===== -->
+  <section id="challenge" class="section">
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-lg-9">
+          <p class="section-eyebrow">01 — Context</p>
+          <h2 class="section-title">Business Challenge</h2>
 
-    <div id="out"></div>
+          <p class="lead text-secondary">
+            Machine learning turns historical data into insights for faster, data-driven decisions.
+          </p>
 
-    <footer id="note"></footer>
-  </main>
+          <p class="statement">
+            However, <em>integrating machine learning models reliably into business
+              applications</em> remains a significant challenge.
+          </p>
 
-  <script>
-    const API = (window.API_BASE || "") + "/api";
+          <p class="text-secondary mb-0">
+            This project demonstrates an end-to-end MLOps workflow by training, deploying,
+            and serving a bike-demand forecasting model.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
 
-    const $station = document.getElementById("station");
-    const $date = document.getElementById("date");
-    const $hour = document.getElementById("hour");
-    const $go = document.getElementById("go");
-    const $out = document.getElementById("out");
-    const $note = document.getElementById("note");
+  <!-- ===== ml-app: live prediction ===== -->
+  <section id="forecast" class="section section-alt">
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-lg-9 text-center mb-4">
+          <p class="section-eyebrow">02 — Live model</p>
+          <h2 class="section-title">Predict Trips per Station</h2>
+          <p class="text-secondary">
+            The deployed model, served from AWS Lambda behind API Gateway.
+            Pick a station, a date, and an hour.
+          </p>
+        </div>
+      </div>
 
-    for (let h = 0; h < 24; h++) {
-      const label = h === 0 ? "12 AM" : h < 12 ? `${h} AM` : h === 12 ? "12 PM" : `${h - 12} PM`;
-      $hour.add(new Option(`${String(h).padStart(2, "0")}:00 · ${label}`, h));
-    }
-    $hour.value = 17;
+      <div class="row justify-content-center">
+        <div class="col-lg-7">
+          <div class="forecast-card p-4 p-md-5">
 
-    function show(html) { $out.innerHTML = html; }
+            <div class="mb-3">
+              <label for="station" class="form-label small text-secondary">Station</label>
+              <select id="station" class="form-select">
+                <option>loading…</option>
+              </select>
+            </div>
 
-    // The model is trained on prior-year history, so it only serves the year the
-    // image was built for. Clamping the date input avoids a 400 the user cannot
-    // otherwise anticipate.
-    async function init() {
-      try {
-        const r = await fetch(`${API}/stations`);
-        if (!r.ok) throw new Error(`stations: HTTP ${r.status}`);
-        const { stations, target_year, history_year } = await r.json();
+            <div class="row g-3 mb-4">
+              <div class="col-sm-7">
+                <label for="date" class="form-label small text-secondary">Date</label>
+                <input type="date" id="date" class="form-control">
+              </div>
+              <div class="col-sm-5">
+                <label for="hour" class="form-label small text-secondary">Hour</label>
+                <select id="hour" class="form-select"></select>
+              </div>
+            </div>
 
-        $station.innerHTML = "";
-        for (const s of stations) $station.add(new Option(s.name, s.id));
+            <button id="go" class="btn btn-primary btn-lg w-100" disabled>Forecast</button>
 
-        $date.min = `${target_year}-01-01`;
-        $date.max = `${target_year}-12-31`;
-        $date.value = `${target_year}-07-19`;
+            <div id="out" class="forecast-readout mt-4">
+              <p class="forecast-placeholder mb-0">Your forecast will appear here.</p>
+            </div>
 
-        $note.textContent =
-          `${stations.length} stations · forecasts for ${target_year}, ` +
-          `based on ${history_year} demand patterns.`;
-        $go.disabled = false;
-      } catch (err) {
-        $station.innerHTML = "<option>unavailable</option>";
-        show(`<p class="error">Could not load stations. ${err.message}</p>`);
-      }
-    }
+            <hr class="border-secondary opacity-25">
+            <p id="note" class="small text-secondary text-center mb-0"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
 
-    async function forecast() {
-      $go.disabled = true;
-      show('<p class="unit">…</p>');
+  <!-- ===== machine learning ===== -->
+  <section id="ml" class="section">
+    <div class="container">
 
-      try {
-        const r = await fetch(`${API}/forecast`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            station_id: Number($station.value),
-            date: $date.value,
-            hour: Number($hour.value),
-          }),
-        });
+      <div class="row justify-content-center">
+        <div class="col-lg-9">
+          <p class="section-eyebrow">03 — Modelling</p>
+          <h2 class="section-title">Machine Learning</h2>
+        </div>
+      </div>
 
-        const data = await r.json();
-        // The api reports its own validation errors in `error`; surface those
-        // rather than a generic failure, since they say what to change.
-        if (!r.ok) throw new Error(data.error || `HTTP ${r.status}`);
+      <!-- problem definition -->
+      <div class="row justify-content-center mb-5">
+        <div class="col-lg-9">
+          <h3 class="h4 mb-3">Problem Definition</h3>
 
-        const n = data.predictions[0];
-        const name = $station.options[$station.selectedIndex].text;
-        show(`<div class="value">${n.toFixed(1)}</div>
-          <div class="unit">trips expected · ${name}</div>`);
-      } catch (err) {
-        show(`<p class="error">${err.message}</p>`);
-      } finally {
-        $go.disabled = false;
-      }
-    }
+          <div class="callout mb-4">
+            <p class="mb-0 fs-5">
+              Predict hourly bike rentals at the <strong>73 busiest stations</strong> for
+              annual members, whose demand is driven primarily by predictable weekday
+              commuting patterns.
+            </p>
+          </div>
 
-    $go.addEventListener("click", forecast);
-    init();
-  </script>
+          <h4 class="h6 text-uppercase text-secondary mb-3" style="letter-spacing:.1em">Business impact</h4>
+
+          <div class="row g-3">
+            <div class="col-md-6">
+              <div class="card-flat h-100 p-4">
+                <h5 class="h6 text-primary mb-2">Operations team</h5>
+                <p class="small text-secondary mb-0">
+                  Anticipate demand and rebalance bikes before high-demand stations run out.
+                </p>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="card-flat h-100 p-4">
+                <h5 class="h6 text-primary mb-2">Annual members</h5>
+                <p class="small text-secondary mb-0">
+                  Improve bike availability and service reliability during regular commutes.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- mlops lifecycle carousel -->
+      <div class="row justify-content-center">
+        <div class="col-lg-9">
+          <h3 class="h4 mb-3">MLOps Lifecycle</h3>
+
+          <div id="lifecycle" class="carousel slide lifecycle-carousel" data-bs-ride="false">
+            <div class="carousel-indicators">
+              <button type="button" data-bs-target="#lifecycle" data-bs-slide-to="0" class="active" aria-current="true"
+                aria-label="Data Collection and Preparation"></button>
+              <button type="button" data-bs-target="#lifecycle" data-bs-slide-to="1"
+                aria-label="Model Development"></button>
+              <button type="button" data-bs-target="#lifecycle" data-bs-slide-to="2"
+                aria-label="Training Pipeline with Amazon SageMaker"></button>
+            </div>
+
+            <div class="carousel-inner">
+
+              <!-- slide 1 -->
+              <div class="carousel-item active">
+                <div class="lifecycle-slide">
+                  <p class="lifecycle-step mb-1">Step 1</p>
+                  <h4 class="h5 mb-3">Data Collection &amp; Preparation</h4>
+                  <p class="text-secondary">
+                    Built on the
+                    <a href="https://trip.arguswatcher.net/" class="link-primary" target="_blank" rel="noopener">Toronto
+                      Shared Bike Data Engineering project</a>,
+                    which provides the data warehouse and ETL pipeline. Trip data is exported
+                    from the warehouse and prepared for feature engineering and model training.
+                  </p>
+                  <figure class="figure-framed mb-0">
+                    <img src="img/ml_notebook01.png" alt="Jupyter Notebook showing local data preparation and training"
+                      loading="lazy">
+                  </figure>
+                </div>
+              </div>
+
+              <!-- slide 2 -->
+              <div class="carousel-item">
+                <div class="lifecycle-slide">
+                  <p class="lifecycle-step mb-1">Step 2</p>
+                  <h4 class="h5 mb-3">Model Development</h4>
+                  <p class="text-secondary">
+                    Models are developed and evaluated locally using <code>Jupyter Notebook</code>
+                    and <code>MLflow</code>, covering feature engineering, model selection,
+                    training, validation, and experiment tracking.
+                  </p>
+                  <div class="row g-3">
+                    <div class="col-md-6">
+                      <figure class="figure-framed mb-0 h-100">
+                        <img src="img/ml_mlflow_hyperparameter02.png" alt="MLflow experiment runs" loading="lazy">
+                      </figure>
+                      <p class="figure-caption-sm">MLflow: runs</p>
+                    </div>
+                    <div class="col-md-6">
+                      <figure class="figure-framed mb-0 h-100">
+                        <img src="img/ml_mlflow_hyperparameter01.png" alt="MLflow hyperparameter training results"
+                          loading="lazy">
+                      </figure>
+                      <p class="figure-caption-sm">MLflow: hyperparameter training</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- slide 3 -->
+              <div class="carousel-item">
+                <div class="lifecycle-slide">
+                  <p class="lifecycle-step mb-1">Step 3</p>
+                  <h4 class="h5 mb-3">Training Pipeline with Amazon SageMaker</h4>
+                  <p class="text-secondary">
+                    <code>GitHub Actions</code> automates the training job, which runs as an
+                    <code>Amazon SageMaker</code> training job and publishes the resulting model artifact.
+                  </p>
+                  <div class="row g-3">
+                    <div class="col-md-6">
+                      <figure class="figure-framed mb-0 h-100">
+                        <img src="img/mlops_github01.png" alt="GitHub Actions automated training workflow"
+                          loading="lazy">
+                      </figure>
+                      <p class="figure-caption-sm">GitHub Actions: automated training job</p>
+                    </div>
+                    <div class="col-md-6">
+                      <figure class="figure-framed mb-0 h-100">
+                        <img src="img/sagemaker_training_job01.png" alt="Amazon SageMaker training jobs console"
+                          loading="lazy">
+                      </figure>
+                      <p class="figure-caption-sm">Amazon SageMaker: training jobs</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <button class="carousel-control-prev" type="button" data-bs-target="#lifecycle" data-bs-slide="prev">
+              <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+              <span class="visually-hidden">Previous</span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#lifecycle" data-bs-slide="next">
+              <span class="carousel-control-next-icon" aria-hidden="true"></span>
+              <span class="visually-hidden">Next</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ===== deployment ===== -->
+  <section id="deployment" class="section section-alt">
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-lg-9">
+          <p class="section-eyebrow">04 — Delivery</p>
+          <h2 class="section-title">Application Deployment</h2>
+
+          <p class="text-secondary">
+            Deployment is automated with <code>GitHub Actions</code> workflows, triggered when
+            code is updated or a model training job completes. The trained model is served on AWS:
+            <code>Lambda</code> for serverless inference, <code>API Gateway</code> as the entry
+            point, <code>S3</code> for the frontend, <code>CloudFront</code> for caching, and
+            <code>Cloudflare</code> for DNS.
+          </p>
+
+          <figure class="figure-framed mt-4 mb-0">
+            <img src="img/deploy01.png" alt="AWS serving architecture: CloudFront, S3, API Gateway, and Lambda"
+              loading="lazy">
+          </figure>
+          <p class="figure-caption-sm">Serving architecture on AWS</p>
+
+          <figure class="figure-framed mt-4 mb-0">
+            <img src="img/deploy02.png" alt="GitHub Actions deployment workflow run" loading="lazy">
+          </figure>
+          <p class="figure-caption-sm">GitHub Actions: automated deployment</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== takeaway ===== -->
+  <section id="takeaway" class="section">
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-lg-9">
+          <p class="section-eyebrow">05 — Takeaway</p>
+          <h2 class="section-title">Ownership Across Roles</h2>
+
+          <p class="text-secondary mb-4">
+            A successful ML application requires clear ownership across multiple roles:
+          </p>
+
+          <div class="card-flat p-4 p-md-5 mb-4">
+            <div class="role-item">
+              <span class="role-name">Data Engineer</span>
+              <span class="text-secondary">Builds dependable data sources and ETL pipelines.</span>
+            </div>
+            <div class="role-item">
+              <span class="role-name">Data Scientist</span>
+              <span class="text-secondary">Converts business problems into validated models and insights.</span>
+            </div>
+            <div class="role-item">
+              <span class="role-name">ML Engineer</span>
+              <span class="text-secondary">Integrates models into production applications.</span>
+            </div>
+            <div class="role-item">
+              <span class="role-name">MLOps Engineer</span>
+              <span class="text-secondary">Automates training, deployment, monitoring, and integration across the ML
+                lifecycle.</span>
+            </div>
+          </div>
+
+          <figure class="figure-framed mb-0">
+            <img src="img/ownership01.png" alt="Diagram of ownership across data, ML, and MLOps roles" loading="lazy">
+          </figure>
+          <p class="figure-caption-sm mb-4">Ownership across the ML lifecycle</p>
+
+          <p class="statement">
+            Clear ownership improves delivery, while <em>MLOps connects each component</em>
+            into a reliable, repeatable production system.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== footer ===== -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="row gy-3 align-items-center">
+        <div class="col-md-6">
+          <strong class="d-block text-body">Toronto Shared Bike MLOps</strong>
+          <span>End-to-end MLOps: training, deployment, and inference.</span>
+        </div>
+        <div class="col-md-6 text-md-end">
+          <a href="https://trip.arguswatcher.net/" target="_blank" rel="noopener" class="me-3">Data Engineering
+            project</a>
+          <a href="https://github.com/simonangel-fong/ml-shared-bike" target="_blank" rel="noopener">GitHub</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+    crossorigin="anonymous"></script>
+  <script src="js/main.js"></script>
 </body>
 
 </html>
